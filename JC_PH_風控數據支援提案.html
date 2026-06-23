@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JC PH 風控數據支援提案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    background: #0a0e1a;
+    color: #e8eaf0;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100%;
+    padding: 60px 80px 48px;
+    position: absolute;
+    top: 0; left: 0;
+    animation: fadeIn 0.4s ease;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 5px 14px;
+  }
+  .nav button {
+    background: none;
+    border: none;
+    color: #aab;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 2px 4px;
+  }
+  .nav button:hover { color: #5b9fff; }
+  .nav button:disabled { color: #333; cursor: default; }
+  .slide-counter {
+    font-size: 10px;
+    color: #667;
+    min-width: 36px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .dot-nav { display: flex; gap: 4px; }
+  .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #334;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .dot.active { background: #5b9fff; transform: scale(1.4); }
+
+  /* Typography */
+  .tag {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #5b9fff;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 74px; font-weight: 800; line-height: 1.15; }
+  h2 { font-size: 52px; font-weight: 700; line-height: 1.2; margin-bottom: 32px; }
+
+  .subtitle {
+    font-size: 27px;
+    color: #667a99;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+  .meta {
+    margin-top: auto;
+    font-size: 19px;
+    color: #445;
+    letter-spacing: 1px;
+  }
+
+  .accent-line {
+    width: 48px; height: 4px;
+    background: linear-gradient(90deg, #5b9fff, #7c5fff);
+    border-radius: 2px;
+    margin-bottom: 28px;
+  }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 8px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 8px; }
+
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #5b9fff, #7c5fff);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card:hover::before { opacity: 1; }
+  .card-icon { font-size: 46px; margin-bottom: 16px; }
+  .card-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #c8d4f0; }
+  .card-desc { font-size: 19px; color: #5a6a88; line-height: 1.7; }
+
+  .badge {
+    display: inline-block;
+    font-size: 17px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .badge-blue   { background: rgba(91,159,255,0.15); color: #5b9fff; border: 1px solid rgba(91,159,255,0.3); }
+  .badge-purple { background: rgba(124,95,255,0.15); color: #a07fff; border: 1px solid rgba(124,95,255,0.3); }
+  .badge-green  { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+  .badge-yellow { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+  .badge-red    { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+  .badge-gray   { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 19px; }
+  th {
+    text-align: left;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #445;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #c0c8d8;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .flow { display: flex; align-items: stretch; gap: 0; margin-top: 8px; }
+  .flow-box { flex: 1; border-radius: 12px; padding: 20px; text-align: center; position: relative; }
+  .flow-arrow { display: flex; align-items: center; color: #334; font-size: 28px; padding: 0 6px; }
+  .flow-label { font-size: 17px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }
+  .flow-value { font-size: 19px; line-height: 1.5; }
+
+  .pain-list { list-style: none; margin-top: 8px; }
+  .pain-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 21px;
+    color: #8a9ab8;
+    line-height: 1.6;
+  }
+  .pain-list li:last-child { border-bottom: none; }
+  .pain-icon { font-size: 27px; flex-shrink: 0; margin-top: 1px; }
+
+  .divider { width: 100%; height: 1px; background: rgba(255,255,255,0.06); margin: 24px 0; }
+
+  .tier-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 8px; }
+  .tier-box { border-radius: 14px; padding: 14px; text-align: center; }
+  .tier-green  { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); }
+  .tier-yellow { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); }
+  .tier-red    { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); }
+  .tier-icon  { font-size: 28px; margin-bottom: 6px; }
+  .tier-title { font-size: 21px; font-weight: 700; margin-bottom: 6px; }
+  .tier-green  .tier-title { color: #34d399; }
+  .tier-yellow .tier-title { color: #fbbf24; }
+  .tier-red    .tier-title { color: #f87171; }
+  .tier-cond  { font-size: 19px; color: #667a88; line-height: 1.7; text-align: left; }
+
+  .dash-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-top: 16px; }
+  .dash-block { border-radius: 14px; padding: 22px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); }
+  .dash-block-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .dash-icon { font-size: 28px; }
+  .dash-title { font-size: 21px; font-weight: 700; color: #c8d4f0; }
+  .dash-items { list-style: none; }
+  .dash-items li {
+    font-size: 19px;
+    color: #5a6a88;
+    padding: 5px 0;
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .dash-items li::before { content: '·'; position: absolute; left: 4px; color: #5b9fff; }
+
+  .pending-list { list-style: none; }
+  .pending-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 10px;
+    font-size: 19px;
+    color: #8090a8;
+  }
+
+  .cover-bg {
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(91,159,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cover-bg2 {
+    position: absolute;
+    bottom: -200px; left: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(124,95,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .slide-num-badge {
+    position: absolute;
+    top: 40px; right: 80px;
+    font-size: 17px;
+    color: #2a3a55;
+    letter-spacing: 2px;
+  }
+
+  .num-hl { color: #5b9fff; font-weight: 800; }
+
+  .cond-list { list-style: none; }
+  .cond-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 17px;
+    color: #7a8fa8;
+    line-height: 1.5;
+  }
+  .cond-list li:last-child { border-bottom: none; }
+  .cond-check { color: #34d399; flex-shrink: 0; font-size: 15px; }
+  .cond-pending { color: #fbbf24; flex-shrink: 0; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide active" id="slide-1">
+    <div class="cover-bg"></div>
+    <div class="cover-bg2"></div>
+    <div class="tag">JC Platform · Philippines Market</div>
+    <h1>風控數據<br>支援提案</h1>
+    <p class="subtitle">以數據驅動風控自動化，降低人工審核負擔<br>P1 出金智能分級 · P2 玩家風險標籤 · P3 每日監控 Dashboard · P4 即時 TG 警報</p>
+    <div class="meta" style="margin-top: auto;">
+      DATA TEAM &nbsp;×&nbsp; RISK CONTROL &nbsp;|&nbsp; 2026.06
+    </div>
+  </div>
+
+  <!-- SLIDE 2: 現況痛點 -->
+  <div class="slide" id="slide-2">
+    <div class="slide-num-badge">02 / 10</div>
+    <div class="tag">Background</div>
+    <h2>現況與痛點</h2>
+    <ul class="pain-list">
+      <li><span class="pain-icon">👁️</span><div><strong style="color:#c0c8d8;">全人工審核</strong><br>所有出金申請均由人工逐筆審查，缺乏系統性判斷依據，效率瓶頸明顯</div></li>
+      <li><span class="pain-icon">📊</span><div><strong style="color:#c0c8d8;">審核 KPI 無法量化</strong><br>審核員處理時長、件數均無統一追蹤，管理層無法掌握團隊效能</div></li>
+      <li><span class="pain-icon">🚨</span><div><strong style="color:#c0c8d8;">風險玩家缺乏系統識別</strong><br>洗錢、洗注、高頻套現等可疑行為依賴人工經驗判斷，無結構化標籤</div></li>
+      <li><span class="pain-icon">⏱️</span><div><strong style="color:#c0c8d8;">玩家等待時間過長</strong><br>正常玩家出金申請與高風險申請同等待遇，體驗差且效率低</div></li>
+    </ul>
+    <div class="divider"></div>
+    <div style="font-size: 19px; color:#445566;">
+      <span style="color:#5b9fff; font-weight:700;">目標：</span>系統處理 80% 低風險案件，人工聚焦 20% 高風險案件 <span style="color:#445566; font-size:16px;">（依現有人審記錄估算；上線後以實際通過率校正）</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: 整體架構 -->
+  <div class="slide" id="slide-3">
+    <div class="slide-num-badge">03 / 10</div>
+    <div class="tag">Architecture</div>
+    <h2>四大模組架構</h2>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:8px;">
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">P1 · 出金智能分級</div>
+        <div class="card-desc">依條件將出金申請自動分為三層：<br><br>✅ 自動放行 — 即時到帳<br>⚠️ 人工審核 — 風控介入<br>🚫 系統擋出 — 直接拒絕</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏷️</div>
+        <div class="card-title">P2 · 玩家風險標籤</div>
+        <div class="card-desc">為每位玩家建立多維風險畫像，6 個標籤 / 5 個維度 + 複合計分機制<br><br>命中 6 個標籤中 ≥ 2 個 → 觸發人工審核<br>審核頁面同步顯示標籤供審核員參考</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📈</div>
+        <div class="card-title">P3 · 風控 Dashboard</div>
+        <div class="card-desc">整合玩家資訊，加速審核效率：<br><br>審核效率 KPI · 風險標籤趨勢<br>大額交易監控 · 合規提醒</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔔</div>
+        <div class="card-title">P4 · 即時 TG 警報</div>
+        <div class="card-desc">8 條即時風控規則，異常自動推播 Telegram：<br><br>💳 金流監控 4 條（含洗錢偵測）<br>🎮 遊戲監控 4 條（失血 / 爆贏 / 高倍率）</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex; gap:32px; font-size: 19px; color:#445566;">
+      <div>📦 <span style="color:#5b9fff;">數據組</span>：指標定義 + 預計算 Snapshot Table</div>
+      <div>🔧 <span style="color:#a07fff;">研發（RD）</span>：Server 條件判斷 + 後台串接</div>
+      <div>👮 <span style="color:#34d399;">風控團隊</span>：規則確認 + 人工介入閾值</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: P1 出金分級 -->
+  <div class="slide" id="slide-4">
+    <div class="slide-num-badge">04 / 10</div>
+    <div class="tag">Module P1</div>
+    <h2 style="margin-bottom:16px;">出金智能分級</h2>
+    <div class="tier-grid" style="margin-top:0;">
+      <div class="tier-box tier-green">
+        <div class="tier-icon">✅</div>
+        <div class="tier-title">自動放行</div>
+        <ul class="cond-list">
+          <li><span class="cond-check">✓</span>KYC 已完成</li>
+          <li><span class="cond-check">✓</span>出金帳戶持有人姓名與 KYC 姓名一致</li>
+          <li><span class="cond-check">✓</span>非首次出金</li>
+          <li><span class="cond-check">✓</span>最近一次入金後累計下注 ≥ 入金金額（1x 流水）</li>
+          <li><span class="cond-check">✓</span>近 90 天出金 ≤ 入金</li>
+          <li><span class="cond-check">✓</span>無關聯風險帳號</li>
+        </ul>
+      </div>
+      <div class="tier-box tier-yellow">
+        <div class="tier-icon">⚠️</div>
+        <div class="tier-title">人工審核</div>
+        <ul class="cond-list">
+          <li><span class="cond-pending">·</span>自動放行的任一條件不符</li>
+          <li style="flex-direction:column; align-items:flex-start; gap:6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="cond-pending">·</span>P2 複合標籤命中 ≥ 2 個
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; padding-left:16px;">
+              <span style="background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.25); border-radius:5px; padding:2px 8px; font-size:14px; color:#fbbf24;">① 大額交易</span>
+              <span style="background:rgba(255,196,57,0.1); border:1px solid rgba(255,196,57,0.25); border-radius:5px; padding:2px 8px; font-size:14px; color:#ffc439;">② 累積大額交易</span>
+              <span style="background:rgba(91,159,255,0.1); border:1px solid rgba(91,159,255,0.25); border-radius:5px; padding:2px 8px; font-size:14px; color:#5b9fff;">③ 高 D/W 比</span>
+              <span style="background:rgba(124,95,255,0.1); border:1px solid rgba(124,95,255,0.25); border-radius:5px; padding:2px 8px; font-size:14px; color:#a07fff;">④ 洗注嫌疑</span>
+              <span style="background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.25); border-radius:5px; padding:2px 8px; font-size:14px; color:#f87171;">⑤ 帳號頻繁更換</span>
+              <span style="background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.25); border-radius:5px; padding:2px 8px; font-size:14px; color:#94a3b8;">⑥ 活動套利 TBD</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="tier-box tier-red">
+        <div class="tier-icon">🚫</div>
+        <div class="tier-title">系統擋出</div>
+        <ul class="cond-list">
+          <li><span style="color:#f87171;">✗</span> KYC 未完成</li>
+          <li><span style="color:#f87171;">✗</span> 帳號狀態凍結 / 封停</li>
+          <li><span style="color:#f87171;">✗</span> 命中 NDRP 黑名單</li>
+        </ul>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <!-- 關聯帳號定義 -->
+    <div style="background:rgba(91,159,255,0.05); border:1px solid rgba(91,159,255,0.18); border-radius:14px; padding:16px 20px; margin-bottom:14px;">
+      <div style="font-size:21px; font-weight:700; color:#5b9fff; letter-spacing:1px; margin-bottom:10px;">🔗 關聯帳號定義 — 滿足以下任一條件即視為關聯</div>
+      <div style="display:flex; gap:10px; align-items:stretch;">
+        <div style="background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3); border-radius:10px; padding:10px 14px; font-size:17px; color:#7a8fa8; line-height:1.6; flex:1;">
+          <div style="font-size:11px; font-weight:700; letter-spacing:1px; color:#22d3ee; opacity:0.7; margin-bottom:6px;">單一命中即判關聯</div>
+          <div style="color:#22d3ee; font-weight:700; margin-bottom:4px; font-size:17px;">🏦 相同銀行帳號 <span style="font-size:13px; font-weight:400; color:#34d399;">✓ 已確認</span></div>
+          出入金使用相同銀行帳戶號碼
+          <div style="margin-top:6px; font-size:15px; color:#445a6a;">⏱ 全帳號生命週期（無時間限制）</div>
+        </div>
+        <div style="display:flex; align-items:center; color:#334; font-size:11px; padding:0 4px; writing-mode:vertical-rl; letter-spacing:2px; opacity:0.5;">OR</div>
+        <div style="flex:2.8; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:10px 14px;">
+          <div style="font-size:11px; font-weight:700; letter-spacing:1px; color:#a07fff; margin-bottom:8px;">以下三項命中 ≥ 2 項即判關聯（三取二）</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px;">
+            <div style="background:rgba(34,211,238,0.08); border:1px solid rgba(34,211,238,0.2); border-radius:8px; padding:8px 10px; font-size:16px; color:#7a8fa8; line-height:1.6;">
+              <div style="color:#22d3ee; font-weight:700; margin-bottom:3px; font-size:17px;">📡 相同 IP <span style="font-size:13px; font-weight:400; color:#34d399;">✓</span></div>
+              同 IP 登入多帳號（排除公共 IP）
+              <div style="margin-top:5px; font-size:14px; color:#445a6a;">⏱ 滾動 30 天｜24h ≥ 3 帳號即時觸發</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 10px; font-size:16px; color:#7a8fa8; line-height:1.6;">
+              <div style="color:#667a88; font-weight:700; margin-bottom:3px; font-size:17px;">📱 相同設備 <span style="font-size:13px; font-weight:400; color:#fbbf24;">⏳</span></div>
+              UDID / 設備指紋相同
+              <div style="margin-top:5px; font-size:14px; color:#445a6a;">⏱ 滾動 180 天</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 10px; font-size:16px; color:#7a8fa8; line-height:1.6;">
+              <div style="color:#667a88; font-weight:700; margin-bottom:3px; font-size:17px;">🔑 相同密碼雜湊 <span style="font-size:13px; font-weight:400; color:#fbbf24;">⏳</span></div>
+              password hash 相同
+              <div style="margin-top:5px; font-size:14px; color:#445a6a;">⏱ 滾動 180 天</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:16px;">
+        <div style="font-size:15px; color:#445566; flex:1;">🌐 公共 IP 白名單：統計法（同 IP 帳號數 ≥ 10）+ MaxMind GeoLite2 批次標注 connection_type</div>
+        <div style="font-size:15px; color:#445566; flex:1; border-left:1px solid rgba(255,255,255,0.06); padding-left:16px;">📈 後續優化空間：上線後分析人工審核可疑案件中，關聯 IP 帳號的平均建立時間差，回頭校正時間窗口</div>
+      </div>
+    </div>
+    <div style="font-size:19px; color:#445566; margin-top:8px;">⚠️ 「有風險狀態」= 關聯帳號本身被凍結 / 封停 / 命中黑名單 / 已有 P2 複合標籤命中 ≥ 2 個</div>
+  </div>
+
+  <!-- SLIDE 5: P1 技術架構 -->
+  <div class="slide" id="slide-5">
+    <div class="slide-num-badge">05 / 10</div>
+    <div class="tag">Module P1 · Technical</div>
+    <h2 style="margin-bottom:16px;">P1 數據 × RD 分工</h2>
+    <div style="display:flex; align-items:flex-start; gap:0; flex:1; min-height:0;">
+      <!-- 左欄 -->
+      <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
+        <div style="background:rgba(91,159,255,0.12); border:1.5px solid rgba(91,159,255,0.4); border-radius:12px; padding:10px 28px; font-size:19px; font-weight:700; color:#5b9fff; text-align:center;">👤 玩家申請出金</div>
+        <div style="width:2px; height:18px; background:#334; margin:0 auto;"></div>
+        <div style="background:rgba(124,95,255,0.1); border:1.5px solid rgba(124,95,255,0.35); border-radius:12px; padding:12px 20px; width:100%; text-align:center;">
+          <div style="font-size:17px; font-weight:700; color:#a07fff; margin-bottom:10px;">🔧 RD Server 即時查詢</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#34d399;">✓</span> KYC 完成<br><span style="color:#445; font-size:13px;">查自身 DB</span></div>
+            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#34d399;">✓</span> 姓名一致<br><span style="color:#445; font-size:13px;">payout_account_name = kyc_name</span></div>
+            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#34d399;">✓</span> 首次出金<br><span style="color:#445; font-size:13px;">is_first_outflow</span></div>
+            <div style="background:rgba(255,255,255,0.04); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#34d399;">✓</span> 帳號狀態<br><span style="color:#445; font-size:13px;">account_status</span></div>
+            <div style="background:rgba(91,159,255,0.07); border:1px solid rgba(91,159,255,0.2); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#5b9fff;">📦</span> 1x 流水<br><span style="color:#445; font-size:13px;">Snapshot + 1hr delta</span></div>
+            <div style="background:rgba(91,159,255,0.07); border:1px solid rgba(91,159,255,0.2); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#5b9fff;">📦</span> 30天 D/W<br><span style="color:#445; font-size:13px;">Snapshot + 當日值</span></div>
+            <div style="background:rgba(91,159,255,0.07); border:1px solid rgba(91,159,255,0.2); border-radius:8px; padding:7px 10px; font-size:16px; color:#8090a8; text-align:left;"><span style="color:#5b9fff;">📦</span> 關聯帳號<br><span style="color:#445; font-size:13px;">Snapshot 查詢</span></div>
+          </div>
+        </div>
+        <div style="width:2px; height:18px; background:#334; margin:0 auto;"></div>
+        <div style="display:flex; gap:10px; width:100%;">
+          <div style="flex:1; background:rgba(52,211,153,0.08); border:1.5px solid rgba(52,211,153,0.3); border-radius:10px; padding:10px; text-align:center;"><div style="font-size:24px;">✅</div><div style="color:#34d399; font-weight:700; font-size:16px;">自動放行</div></div>
+          <div style="flex:1; background:rgba(251,191,36,0.08); border:1.5px solid rgba(251,191,36,0.3); border-radius:10px; padding:10px; text-align:center;"><div style="font-size:24px;">⚠️</div><div style="color:#fbbf24; font-weight:700; font-size:16px;">人工審核</div></div>
+          <div style="flex:1; background:rgba(248,113,113,0.08); border:1.5px solid rgba(248,113,113,0.3); border-radius:10px; padding:10px; text-align:center;"><div style="font-size:24px;">🚫</div><div style="color:#f87171; font-weight:700; font-size:16px;">系統擋出</div></div>
+        </div>
+      </div>
+      <!-- 中間箭頭 -->
+      <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; padding:0 12px; margin-top:120px;">
+        <div style="font-size:11px; color:#445; writing-mode:vertical-rl; letter-spacing:1px;">預計算資料來源</div>
+        <div style="font-size:22px; color:#5b9fff; margin-top:6px;">←</div>
+      </div>
+      <!-- 右欄 -->
+      <div style="flex:1.2; display:flex; flex-direction:column; gap:8px; margin-top:56px;">
+        <div style="font-size:21px; font-weight:700; color:#5b9fff; letter-spacing:1px; margin-bottom:8px;">📦 數據組 Snapshot Table</div>
+        <!-- 30天 D/W -->
+        <div style="background:rgba(91,159,255,0.04); border:1px solid rgba(91,159,255,0.15); border-radius:10px; padding:12px 14px;">
+          <div style="font-size:14px; font-weight:700; color:#5b9fff; margin-bottom:8px;">📊 30 天 D/W 判斷</div>
+          <div style="display:flex; align-items:stretch; gap:6px;">
+            <div style="flex:1; background:rgba(91,159,255,0.08); border:1px solid rgba(91,159,255,0.2); border-radius:8px; padding:8px 10px; font-size:13px; color:#7a8fa8; line-height:1.6; text-align:center;">
+              <div style="color:#5b9fff; font-size:13px; font-weight:700; margin-bottom:4px;">① 數據組快照</div>
+              前 29 天<br>累計出金 / 入金<br><span style="font-size:11px; color:#8090a8;">每日 00:00 更新</span>
+            </div>
+            <div style="display:flex; align-items:center; font-size:16px; color:#445; font-weight:700;">＋</div>
+            <div style="flex:1; background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.2); border-radius:8px; padding:8px 10px; font-size:13px; color:#7a8fa8; line-height:1.6; text-align:center;">
+              <div style="color:#34d399; font-size:13px; font-weight:700; margin-bottom:4px;">② Server 即時補算</div>
+              當日<br>出金 / 入金<br><span style="font-size:11px; color:#8090a8;">出金申請時觸發</span>
+            </div>
+            <div style="display:flex; align-items:center; font-size:16px; color:#445; font-weight:700;">→</div>
+            <div style="flex:1; background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.2); border-radius:8px; padding:8px 10px; font-size:13px; color:#7a8fa8; line-height:1.6; text-align:center;">
+              <div style="color:#fbbf24; font-size:13px; font-weight:700; margin-bottom:4px;">③ 判斷</div>
+              90天出金<br>≤ 90天入金？
+            </div>
+          </div>
+        </div>
+        <!-- 1x 流水 -->
+        <div style="background:rgba(52,211,153,0.04); border:1px solid rgba(52,211,153,0.15); border-radius:10px; padding:12px 14px;">
+          <div style="font-size:14px; font-weight:700; color:#34d399; margin-bottom:8px;">🎰 1x 流水判斷（最近一次入金後）</div>
+          <div style="display:flex; align-items:stretch; gap:6px;">
+            <div style="flex:1; background:rgba(91,159,255,0.08); border:1px solid rgba(91,159,255,0.2); border-radius:8px; padding:8px 10px; font-size:13px; color:#7a8fa8; line-height:1.6; text-align:center;">
+              <div style="color:#5b9fff; font-size:13px; font-weight:700; margin-bottom:4px;">① 數據組快照</div>
+              最近一次入金時間 &amp; 金額<br>＋ 該時間後累計押注<br><span style="font-size:11px; color:#8090a8;">每小時更新</span>
+            </div>
+            <div style="display:flex; align-items:center; font-size:16px; color:#445; font-weight:700;">＋</div>
+            <div style="flex:1; background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.2); border-radius:8px; padding:8px 10px; font-size:13px; color:#7a8fa8; line-height:1.6; text-align:center;">
+              <div style="color:#34d399; font-size:13px; font-weight:700; margin-bottom:4px;">② Server 即時補算</div>
+              最近 1 小時新增押注<br>＋ 確認有無新入金<br><span style="font-size:11px; color:#8090a8;">出金申請時觸發</span>
+            </div>
+            <div style="display:flex; align-items:center; font-size:16px; color:#445; font-weight:700;">→</div>
+            <div style="flex:1; background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.2); border-radius:8px; padding:8px 10px; font-size:13px; color:#7a8fa8; line-height:1.6; text-align:center;">
+              <div style="color:#fbbf24; font-size:13px; font-weight:700; margin-bottom:4px;">③ 判斷</div>
+              ①累計押注＋②<br>≥ 入金金額？
+            </div>
+          </div>
+          <div style="margin-top:6px; font-size:12px; color:#8090a8; font-style:italic;">⚠️ ② 若發現最近 1 小時有新入金 → 以新入金為基準重新計算，忽略 ① 快照數據</div>
+        </div>
+        <!-- 關聯帳號 -->
+        <div style="background:rgba(34,211,238,0.03); border:1px solid rgba(34,211,238,0.12); border-radius:10px; padding:10px 14px;">
+          <div style="font-size:14px; font-weight:700; color:#22d3ee; margin-bottom:6px;">🔗 關聯帳號</div>
+          <div style="display:flex; gap:8px;">
+            <div style="flex:1; background:rgba(52,211,153,0.06); border:1px solid rgba(52,211,153,0.15); border-radius:8px; padding:7px 10px; font-size:13px; color:#5a6a88; line-height:1.6;">
+              <div style="color:#34d399; font-size:12px; font-weight:700; margin-bottom:3px;">📡 IP &nbsp;·&nbsp; 每小時快照</div>同 IP 帳號關聯圖，滾動 30 天
+            </div>
+            <div style="flex:1; background:rgba(34,211,238,0.06); border:1px solid rgba(34,211,238,0.15); border-radius:8px; padding:7px 10px; font-size:13px; color:#5a6a88; line-height:1.6;">
+              <div style="color:#22d3ee; font-size:12px; font-weight:700; margin-bottom:3px;">🏦 銀行帳號 &nbsp;·&nbsp; 事件觸發</div>綁定 / 修改時查詢，命中寫 account_relation 表
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: P2 玩家風險標籤 -->
+  <div class="slide" id="slide-6">
+    <div class="slide-num-badge">06 / 10</div>
+    <div class="tag">Module P2</div>
+    <h2>玩家風險標籤 <span style="font-size:18px; font-weight:400; color:#8a9ab8;">（標籤每 1 小時更新一次）</span></h2>
+    <table>
+      <thead><tr><th>標籤</th><th>抓的是什麼</th><th>判斷條件</th><th>維度</th><th>狀態</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>① 大額交易</strong></td>
+          <td style="color:#8a9ab8; font-size:17px;">24小時內出金或入金有單筆達門檻（內部風控觀察，非法規強制申報）</td>
+          <td>24小時內 單筆出入金 ≥ ₱30,000</td>
+          <td><span class="badge badge-yellow">A 交易金額</span></td>
+          <td><span class="badge badge-green">✓ 確認</span></td>
+        </tr>
+        <tr>
+          <td><strong>② 累積大額交易</strong></td>
+          <td style="color:#8a9ab8; font-size:17px;">出金或入金任一方向短期分批累積，疑似拆單規避單筆大額觸發</td>
+          <td>24小時內，出金 <em>或</em> 入金 任一方向：≥ 2 筆 且 合計 ≥ ₱50,000</td>
+          <td><span class="badge badge-yellow">A 交易金額</span></td>
+          <td><span class="badge badge-green">✓ 確認</span></td>
+        </tr>
+        <tr>
+          <td><strong>③ 高 D/W 比</strong></td>
+          <td style="color:#8a9ab8; font-size:17px;">長期大額提出，帳戶疑似資金通道</td>
+          <td>30天 D/W 比 &gt; 0.8 <span style="color:#445566; font-size:14px;">①</span> <span style="color:#445566; font-size:13px;">（平台一般活躍玩家中位數約 0.5～0.65；0.8 以上為異常高值）</span></td>
+          <td><span class="badge badge-blue">B 出入異常</span></td>
+          <td><span class="badge badge-green">✓ 確認</span></td>
+        </tr>
+        <tr>
+          <td><strong>④ 洗注嫌疑</strong></td>
+          <td style="color:#8a9ab8; font-size:17px;">押注量大但損失極低，以最小成本完成流水</td>
+          <td>30天押注 ≥ ₱10,000 且 GGR &lt; 1% <span style="color:#445566; font-size:14px;">②</span></td>
+          <td><span class="badge badge-purple">C 洗注嫌疑</span></td>
+          <td><span class="badge badge-green">✓ 確認</span></td>
+        </tr>
+        <tr>
+          <td><strong>⑤ 出金帳號頻繁更換</strong></td>
+          <td style="color:#8a9ab8; font-size:17px;">資金流向多個帳戶，疑似 Money Mule 架構</td>
+          <td>30天內換帳號 ≥ 2 次</td>
+          <td><span class="badge badge-red">D 身份合規</span></td>
+          <td><span class="badge badge-green">✓ 確認</span></td>
+        </tr>
+        <tr>
+          <td><strong>⑥ 活動套利</strong></td>
+          <td style="color:#8a9ab8; font-size:17px;">利用促銷機制套取獎金差價</td>
+          <td style="color:#445566;">TBD</td>
+          <td><span class="badge badge-gray">E 活動套利</span></td>
+          <td><span class="badge badge-gray">⏳ 待討論</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:14px; color:#334455; margin-top:10px; line-height:1.8;">
+      ① D/W 比 = 累計出金 ÷ 累計入金 &nbsp;·&nbsp; ② GGR 比率 = 莊家實際獲利 ÷ 玩家總押注（正常值 3~5%，&lt; 1% 代表玩家損失極低）
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex; gap:32px; font-size: 19px; color:#5a6a88; line-height:1.9;">
+      <div style="flex:1;">🔗 <strong style="color:#c0c8d8;">複合計分機制</strong>：標籤依 A 交易金額 / B 出入異常 / C 洗注嫌疑 / D 身份合規 / E 活動套利 分為 5 個維度，命中 <span class="num-hl">6 個標籤中 ≥ 2 個</span> → 觸發人工審核</div>
+      <div style="flex:1; border-left:1px solid rgba(255,255,255,0.07); padding-left:32px;">👁️ <strong style="color:#c0c8d8;">審核頁面輔助顯示</strong>：人工審核時，系統同步顯示該玩家命中的所有風險標籤，讓審核人員即時掌握風險背景</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: P3 Dashboard -->
+  <div class="slide" id="slide-7">
+    <div class="slide-num-badge">07 / 10</div>
+    <div class="tag">風控 Dashboard</div>
+    <h2 style="margin-bottom:4px;">風控 Dashboard <span style="font-size:22px; color:#334455; font-weight:400; letter-spacing:1px;">— UI 模板（示意）</span></h2>
+    <div style="font-size:15px; color:#445566; margin-bottom:14px;">審核效率 KPI · 風險標籤趨勢 · 大額交易監控 · 合規提醒 &nbsp;｜&nbsp; 整合玩家資訊，加速審核效率</div>
+
+    <!-- KPI 列 -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px;">
+      <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.35); border-radius:12px; padding:14px 18px;">
+        <div style="font-size:15px; color:#a89060; letter-spacing:1px; margin-bottom:6px; font-weight:600;">⏳ 待審中</div>
+        <div style="font-size:42px; font-weight:800; color:#fbbf24; line-height:1;">23</div>
+        <div style="font-size:14px; color:#7a6a40; margin-top:5px;">件</div>
+      </div>
+      <div style="background:rgba(52,211,153,0.07); border:1px solid rgba(52,211,153,0.2); border-radius:12px; padding:14px 18px;">
+        <div style="font-size:15px; color:#3a8a66; letter-spacing:1px; margin-bottom:6px; font-weight:600;">✅ 今日已審</div>
+        <div style="font-size:42px; font-weight:800; color:#34d399; line-height:1;">47</div>
+        <div style="font-size:14px; color:#2a6a4a; margin-top:5px;">件</div>
+      </div>
+      <div style="background:rgba(91,159,255,0.07); border:1px solid rgba(91,159,255,0.2); border-radius:12px; padding:14px 18px;">
+        <div style="font-size:15px; color:#3a5a88; letter-spacing:1px; margin-bottom:6px; font-weight:600;">⏱ 平均審核時長</div>
+        <div style="font-size:42px; font-weight:800; color:#5b9fff; line-height:1;">8.2</div>
+        <div style="font-size:14px; color:#2a3a66; margin-top:5px;">分鐘</div>
+        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(91,159,255,0.15); display:flex; gap:12px; font-size:13px; color:#334466;">
+          <span>中位數 <strong style="color:#7ab2ff;">6.5</strong> 分</span>
+          <span>最大值 <strong style="color:#f87171;">32</strong> 分</span>
+        </div>
+      </div>
+      <div style="background:rgba(248,113,113,0.07); border:1px solid rgba(248,113,113,0.2); border-radius:12px; padding:14px 18px;">
+        <div style="font-size:15px; color:#884040; letter-spacing:1px; margin-bottom:6px; font-weight:600;">🚨 複合命中玩家</div>
+        <div style="font-size:42px; font-weight:800; color:#f87171; line-height:1;">5</div>
+        <div style="font-size:14px; color:#662a2a; margin-top:5px;">人（≥ 2 標籤）</div>
+      </div>
+    </div>
+
+    <!-- 主內容 -->
+    <div style="display:flex; gap:12px; flex:1; min-height:0;">
+
+      <!-- 左：風險標籤總覽 + 合規提醒 -->
+      <div style="flex:1.3; display:flex; flex-direction:column; gap:10px;">
+
+        <!-- 風險標籤總覽 -->
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px 16px; flex:1; display:flex; flex-direction:column;">
+          <div style="font-size:16px; font-weight:700; color:#c8d4f0; margin-bottom:10px;">🏷️ 風險標籤命中總覽</div>
+          <table style="font-size:15px;">
+            <thead><tr>
+              <th style="font-size:13px; padding:6px 10px;">標籤</th>
+              <th style="font-size:13px; padding:6px 10px; text-align:right;">命中人數</th>
+              <th style="font-size:13px; padding:6px 10px;">7日趨勢</th>
+              <th style="font-size:13px; padding:6px 10px;">命中分佈（相對）</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td style="padding:7px 10px;">① 大額交易</td>
+                <td style="padding:7px 10px; text-align:right; color:#fbbf24; font-weight:700;">18</td>
+                <td style="padding:7px 10px; color:#f87171;">↑ +3</td>
+                <td style="padding:7px 10px;"><div style="background:rgba(251,191,36,0.15); border-radius:4px; height:7px; width:90px;"><div style="background:#fbbf24; border-radius:4px; height:7px; width:72px;"></div></div></td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;">② 累積大額交易</td>
+                <td style="padding:7px 10px; text-align:right; color:#5b9fff; font-weight:700;">7</td>
+                <td style="padding:7px 10px; color:#6a7a99;">→ 持平</td>
+                <td style="padding:7px 10px;"><div style="background:rgba(91,159,255,0.15); border-radius:4px; height:7px; width:90px;"><div style="background:#5b9fff; border-radius:4px; height:7px; width:35px;"></div></div></td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;">③ 高 D/W 比</td>
+                <td style="padding:7px 10px; text-align:right; color:#5b9fff; font-weight:700;">12</td>
+                <td style="padding:7px 10px; color:#f87171;">↑ +2</td>
+                <td style="padding:7px 10px;"><div style="background:rgba(91,159,255,0.15); border-radius:4px; height:7px; width:90px;"><div style="background:#5b9fff; border-radius:4px; height:7px; width:54px;"></div></div></td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;">④ 洗注嫌疑</td>
+                <td style="padding:7px 10px; text-align:right; color:#a07fff; font-weight:700;">3</td>
+                <td style="padding:7px 10px; color:#34d399;">↓ -1</td>
+                <td style="padding:7px 10px;"><div style="background:rgba(160,127,255,0.15); border-radius:4px; height:7px; width:90px;"><div style="background:#a07fff; border-radius:4px; height:7px; width:15px;"></div></div></td>
+              </tr>
+              <tr>
+                <td style="padding:7px 10px;">⑤ 出金帳號更換</td>
+                <td style="padding:7px 10px; text-align:right; color:#f87171; font-weight:700;">2</td>
+                <td style="padding:7px 10px; color:#6a7a99;">→ 持平</td>
+                <td style="padding:7px 10px;"><div style="background:rgba(248,113,113,0.15); border-radius:4px; height:7px; width:90px;"><div style="background:#f87171; border-radius:4px; height:7px; width:10px;"></div></div></td>
+              </tr>
+              <tr style="border-top:1px solid rgba(255,255,255,0.08);">
+                <td style="padding:8px 10px; color:#f87171; font-weight:700;">🚨 複合命中 ≥ 2</td>
+                <td style="padding:8px 10px; text-align:right; color:#f87171; font-weight:800; font-size:18px;">5</td>
+                <td style="padding:8px 10px; color:#f87171;">↑ +2</td>
+                <td style="padding:8px 10px;"><div style="background:rgba(248,113,113,0.15); border-radius:4px; height:7px; width:90px;"><div style="background:#f87171; border-radius:4px; height:7px; width:25px;"></div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 合規提醒 -->
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px 16px;">
+          <div style="font-size:15px; font-weight:700; color:#c8d4f0; margin-bottom:8px;">📋 合規提醒</div>
+          <div style="display:flex; gap:0; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#6a7a99; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+              <span>🪪 KYC 30天內到期</span>
+              <span style="color:#fbbf24; font-weight:700;">14 人</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#6a7a99; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+              <span>⚠️ KYC 審核失敗 / 資料過期</span>
+              <span style="color:#f87171; font-weight:700;">3 人</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; color:#6a7a99; padding:5px 0;">
+              <span>🏛️ AMLA 門檻觸發</span>
+              <span style="color:#a07fff; font-weight:700;">1 筆</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 右欄：大額交易監控 -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+
+        <!-- 大額交易清單 -->
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px 16px; flex:1; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:16px; font-weight:700; color:#c8d4f0;">💰 大額交易監控（今日 單筆出入金 ≥ ₱30,000）</div>
+            <div style="font-size:12px; color:#6a4a20; background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.3); border-radius:6px; padding:2px 8px;">🔗 橙色 = 同日同玩家同時出現於入金與出金</div>
+          </div>
+
+          <!-- 入金 -->
+          <div>
+            <div style="font-size:13px; color:#34d399; font-weight:600; margin-bottom:4px; letter-spacing:0.5px;">▼ 入金</div>
+            <table style="font-size:14px;">
+              <thead><tr>
+                <th style="font-size:12px; padding:4px 8px;">玩家 ID</th>
+                <th style="font-size:12px; padding:4px 8px; text-align:right;">金額</th>
+                <th style="font-size:12px; padding:4px 8px;">時間</th>
+                <th style="font-size:12px; padding:4px 8px;">命中標籤</th>
+              </tr></thead>
+              <tbody>
+                <tr style="background:rgba(249,115,22,0.1); border-radius:6px;">
+                  <td style="padding:5px 8px; color:#f97316; font-weight:700;">PH-00482</td>
+                  <td style="padding:5px 8px; text-align:right; color:#34d399; font-weight:700;">₱25,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 09:14</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span><span class="badge badge-blue" style="font-size:11px; padding:1px 6px;">高D/W比</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-01837</td>
+                  <td style="padding:5px 8px; text-align:right; color:#34d399; font-weight:700;">₱18,500</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 11:02</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span><span class="badge badge-blue" style="font-size:11px; padding:1px 6px;">累積大額交易</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-02294</td>
+                  <td style="padding:5px 8px; text-align:right; color:#34d399; font-weight:700;">₱32,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 12:47</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-00915</td>
+                  <td style="padding:5px 8px; text-align:right; color:#34d399; font-weight:700;">₱12,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 14:33</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-blue" style="font-size:11px; padding:1px 6px;">累積大額交易</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-04481</td>
+                  <td style="padding:5px 8px; text-align:right; color:#34d399; font-weight:700;">₱50,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 16:05</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span><span class="badge badge-red" style="font-size:11px; padding:1px 6px;">洗注嫌疑</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 出金 -->
+          <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:8px;">
+            <div style="font-size:13px; color:#f87171; font-weight:600; margin-bottom:4px; letter-spacing:0.5px;">▲ 出金</div>
+            <table style="font-size:14px;">
+              <thead><tr>
+                <th style="font-size:12px; padding:4px 8px;">玩家 ID</th>
+                <th style="font-size:12px; padding:4px 8px; text-align:right;">金額</th>
+                <th style="font-size:12px; padding:4px 8px;">時間</th>
+                <th style="font-size:12px; padding:4px 8px;">命中標籤</th>
+              </tr></thead>
+              <tbody>
+                <tr style="background:rgba(249,115,22,0.1);">
+                  <td style="padding:5px 8px; color:#f97316; font-weight:700;">PH-00482</td>
+                  <td style="padding:5px 8px; text-align:right; color:#f87171; font-weight:700;">₱22,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 14:05</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-red" style="font-size:11px; padding:1px 6px;">高D/W比</span><span class="badge badge-red" style="font-size:11px; padding:1px 6px;">帳號更換</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-03341</td>
+                  <td style="padding:5px 8px; text-align:right; color:#f87171; font-weight:700;">₱15,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 14:18</td>
+                  <td style="padding:5px 8px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-02294</td>
+                  <td style="padding:5px 8px; text-align:right; color:#f87171; font-weight:700;">₱28,500</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 15:30</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span><span class="badge badge-blue" style="font-size:11px; padding:1px 6px;">高D/W比</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-05128</td>
+                  <td style="padding:5px 8px; text-align:right; color:#f87171; font-weight:700;">₱40,000</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 16:44</td>
+                  <td style="padding:5px 8px; display:flex; flex-wrap:wrap; gap:3px;"><span class="badge badge-red" style="font-size:11px; padding:1px 6px;">洗注嫌疑</span><span class="badge badge-red" style="font-size:11px; padding:1px 6px;">帳號更換</span></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px 8px; color:#c0c8d8;">PH-00731</td>
+                  <td style="padding:5px 8px; text-align:right; color:#f87171; font-weight:700;">₱11,200</td>
+                  <td style="padding:5px 8px; color:#6a7a99; font-size:12px;">06/22 17:22</td>
+                  <td style="padding:5px 8px;"><span class="badge badge-yellow" style="font-size:11px; padding:1px 6px;">大額交易</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="margin-top:10px; font-size:13px; color:#2a3a55; display:flex; gap:24px;">
+      <span>📦 <span style="color:#5b9fff;">數據組</span>：指標定義 + Snapshot 產出</span>
+      <span>🔧 <span style="color:#a07fff;">RD</span>：UI 串接 + 即時更新</span>
+      <span>🔢 以上數字為示意樣本，實際上線後替換</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: 審核員快審面板 -->
+  <div class="slide" id="slide-8">
+    <div class="slide-num-badge">08 / 10</div>
+    <div class="tag">Module P3 · 審核員視角</div>
+
+    <!-- 頂部：玩家身份 + 本次申請 + 觸發路徑（右側）+ 快審結論 -->
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:12px 18px;">
+
+      <!-- 玩家 ID -->
+      <div style="flex:0 0 auto;">
+        <div style="font-size:11px; color:#445566; letter-spacing:1px; margin-bottom:2px;">玩家 ID</div>
+        <div style="font-size:22px; font-weight:800; color:#c8d4f0;">PH-00482</div>
+        <div style="font-size:12px; color:#445566; margin-top:2px;">Bronze · 註冊 2023-01-11</div>
+      </div>
+      <div style="width:1px; align-self:stretch; background:rgba(255,255,255,0.07);"></div>
+
+      <!-- 本次出金 -->
+      <div style="flex:0 0 auto;">
+        <div style="font-size:11px; color:#445566; margin-bottom:2px;">本次出金申請</div>
+        <div style="font-size:26px; font-weight:800; color:#f87171;">₱22,000</div>
+        <div style="font-size:12px; color:#6a7a99;">06/22 13:58 申請</div>
+      </div>
+      <div style="width:1px; align-self:stretch; background:rgba(255,255,255,0.07);"></div>
+
+      <!-- 最近入金 -->
+      <div style="flex:0 0 auto;">
+        <div style="font-size:11px; color:#445566; margin-bottom:2px;">最近一次入金</div>
+        <div style="font-size:26px; font-weight:800; color:#c8d4f0;">₱25,000</div>
+        <div style="font-size:12px; color:#6a7a99;">06/22 09:14（同日）</div>
+      </div>
+      <div style="width:1px; align-self:stretch; background:rgba(255,255,255,0.07);"></div>
+
+      <!-- 錢包餘額 -->
+      <div style="flex:0 0 auto;">
+        <div style="font-size:11px; color:#445566; margin-bottom:2px;">錢包餘額</div>
+        <div style="font-size:26px; font-weight:800; color:#c8d4f0;">₱22,380</div>
+        <div style="font-size:12px; color:#6a7a99;">即時</div>
+      </div>
+      <div style="width:1px; align-self:stretch; background:rgba(255,255,255,0.07);"></div>
+
+      <!-- 異常標籤（只顯示觸發的） -->
+      <div style="flex:1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:2px 0;">
+        <span style="font-size:13px; color:#445566; flex-shrink:0;">異常原因</span>
+        <span style="border:1px solid rgba(248,113,113,0.5); border-radius:6px; padding:5px 14px; color:#f87171; background:rgba(248,113,113,0.12); font-size:17px; font-weight:600;">大額交易</span>
+        <span style="border:1px solid rgba(248,113,113,0.5); border-radius:6px; padding:5px 14px; color:#f87171; background:rgba(248,113,113,0.12); font-size:17px; font-weight:600;">出入異常</span>
+        <span style="border:1px solid rgba(248,113,113,0.5); border-radius:6px; padding:5px 14px; color:#f87171; background:rgba(248,113,113,0.12); font-size:17px; font-weight:600;">身份合規</span>
+      </div>
+      <div style="width:1px; align-self:stretch; background:rgba(255,255,255,0.07);"></div>
+
+      <!-- ⚡ 快速裁定（右上角，橫排） -->
+      <div style="flex:0 0 auto; display:flex; flex-direction:column; gap:5px; align-items:flex-end;">
+        <div style="font-size:11px; color:#445566; letter-spacing:1px;">⚡ 快速裁定</div>
+        <div style="display:flex; gap:6px;">
+          <div style="background:rgba(52,211,153,0.08); border:1.5px solid rgba(52,211,153,0.3); border-radius:7px; padding:7px 16px; font-size:13px; color:#34d399; font-weight:600; cursor:pointer;">✅ 放行</div>
+          <div style="background:rgba(251,191,36,0.08); border:1.5px solid rgba(251,191,36,0.35); border-radius:7px; padding:7px 16px; font-size:13px; color:#fbbf24; font-weight:600; cursor:pointer;">⏸ 暫緩</div>
+          <div style="background:rgba(248,113,113,0.12); border:1.5px solid rgba(248,113,113,0.4); border-radius:7px; padding:7px 16px; font-size:13px; color:#f87171; font-weight:700; cursor:pointer;">🚫 擋出</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主體：三欄 -->
+    <div style="display:flex; gap:12px; flex:1; min-height:0;">
+
+      <!-- 左：資金風險指標 -->
+      <div style="flex:1; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px;">
+
+        <!-- 標題 + 篩選器 -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:20px; font-weight:700; color:#c8d4f0;">💸 資金風險指標</div>
+          <div style="display:flex; gap:4px;" id="s8-period-tabs">
+            <button onclick="s8SetPeriod('all')"   class="s8ptab s8ptab-active" id="s8-tab-all">終生</button>
+            <button onclick="s8SetPeriod('d90')"   class="s8ptab" id="s8-tab-d90">近90日</button>
+            <button onclick="s8SetPeriod('d30')"   class="s8ptab" id="s8-tab-d30">近30日</button>
+            <button onclick="s8SetPeriod('d7')"    class="s8ptab" id="s8-tab-d7">近7日</button>
+          </div>
+        </div>
+
+        <style>
+        .s8ptab { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:6px; color:#5a6a7a; font-size:13px; padding:4px 10px; cursor:pointer; transition:all 0.15s; }
+        .s8ptab:hover { color:#c8d4f0; border-color:rgba(255,255,255,0.2); }
+        .s8ptab-active { background:rgba(91,159,255,0.15) !important; border-color:rgba(91,159,255,0.5) !important; color:#5b9fff !important; font-weight:700; }
+        </style>
+
+        <!-- Row 1：入金 / 出金 / 損益 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;" id="s8-lbl-dep">入金</div>
+            <div style="font-size:20px; font-weight:800; color:#c8d4f0;" id="s8-val-dep">₱2,327,897</div>
+            <div style="font-size:13px; color:#445566; margin-top:4px;" id="s8-cnt-dep">共 148 筆</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;" id="s8-lbl-wit">出金</div>
+            <div style="font-size:20px; font-weight:800; color:#c8d4f0;" id="s8-val-wit">₱2,315,769</div>
+            <div style="font-size:13px; color:#445566; margin-top:4px;" id="s8-cnt-wit">共 112 筆</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;" id="s8-lbl-pnl">淨損益</div>
+            <div style="font-size:20px; font-weight:800;" id="s8-val-pnl" style="color:#f87171;">-₱11,828</div>
+          </div>
+        </div>
+
+        <!-- Row 2：流水 / Win Loss -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;" id="s8-lbl-bet">流水</div>
+            <div style="font-size:20px; font-weight:800; color:#c8d4f0;" id="s8-val-bet">₱3,042,429</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;" id="s8-lbl-wl">Win Loss</div>
+            <div style="font-size:20px; font-weight:800;" id="s8-val-wl">-₱79,604</div>
+            <div style="font-size:12px; color:#334455; margin-top:5px;">= 玩家押注總額 − 玩家贏回總額</div>
+          </div>
+        </div>
+
+        <!-- Row 3：D/W比 / GGR比率（框卡，異常時框框變色） -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div id="s8-card-dw" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px; transition:all 0.2s;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;">D/W 比</div>
+            <div style="font-size:22px; font-weight:800; color:#c8d4f0;" id="s8-val-dw">99.5%</div>
+            <div style="font-size:12px; color:#334455; margin-top:4px;">= 累計出金 ÷ 累計入金</div>
+          </div>
+          <div id="s8-card-ggr" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px 12px; transition:all 0.2s;">
+            <div style="font-size:15px; color:#5a6a7a; margin-bottom:5px;">GGR 比率</div>
+            <div style="font-size:22px; font-weight:800; color:#c8d4f0;" id="s8-val-ggr">2.6%</div>
+            <div style="font-size:12px; color:#334455; margin-top:4px;">正常 3–5%，&lt;1% 極低損耗</div>
+          </div>
+        </div>
+
+        <script>
+        const s8Periods = {
+          all: {
+            dep:'₱2,327,897', depCnt:'共 148 筆', wit:'₱2,315,769', witCnt:'共 112 筆',
+            pnl:'-₱11,828', pnlColor:'#f87171',
+            bet:'₱3,042,429', wl:'-₱79,604', wlColor:'#f87171',
+            dw:'99.5%', dwColor:'#f87171',
+            ggr:'2.6%', ggrColor:'#f87171'
+          },
+          d90: {
+            dep:'₱480,000', depCnt:'共 12 筆', wit:'₱475,200', witCnt:'共 9 筆',
+            pnl:'-₱12,400', pnlColor:'#f87171',
+            bet:'₱892,400', wl:'-₱45,200', wlColor:'#f87171',
+            dw:'99%', dwColor:'#f87171',
+            ggr:'0.4%', ggrColor:'#f87171'
+          },
+          d30: {
+            dep:'₱180,000', depCnt:'共 4 筆', wit:'₱178,500', witCnt:'共 3 筆',
+            pnl:'-₱8,200', pnlColor:'#f87171',
+            bet:'₱342,100', wl:'-₱18,900', wlColor:'#f87171',
+            dw:'99%', dwColor:'#f87171',
+            ggr:'1.2%', ggrColor:'#f87171'
+          },
+          d7: {
+            dep:'₱25,000', depCnt:'共 1 筆', wit:'₱22,000', witCnt:'共 1 筆',
+            pnl:'+₱3,000', pnlColor:'#34d399',
+            bet:'₱98,200', wl:'-₱12,100', wlColor:'#f87171',
+            dw:'88%', dwColor:'#f87171',
+            ggr:'0.4%', ggrColor:'#f87171'
+          }
+        };
+        function s8SetPeriod(p) {
+          ['all','d90','d30','d7'].forEach(k => {
+            document.getElementById('s8-tab-'+k).classList.toggle('s8ptab-active', k === p);
+          });
+          const d = s8Periods[p];
+          const prefix = { all:'累計', d90:'近90日', d30:'近30日', d7:'近7日' }[p];
+          document.getElementById('s8-lbl-dep').textContent = prefix + ' 入金';
+          document.getElementById('s8-lbl-wit').textContent = prefix + ' 出金';
+          document.getElementById('s8-lbl-pnl').textContent = prefix + ' 損益';
+          document.getElementById('s8-lbl-bet').textContent = prefix + ' 流水';
+          document.getElementById('s8-lbl-wl').textContent = prefix === '累計' ? 'Win Loss（累計）' : prefix + ' Win Loss';
+          document.getElementById('s8-val-dep').textContent = d.dep;
+          document.getElementById('s8-cnt-dep').textContent = d.depCnt;
+          document.getElementById('s8-val-wit').textContent = d.wit;
+          document.getElementById('s8-cnt-wit').textContent = d.witCnt;
+          const pnlEl = document.getElementById('s8-val-pnl');
+          pnlEl.textContent = d.pnl; pnlEl.style.color = d.pnlColor;
+          document.getElementById('s8-val-bet').textContent = d.bet;
+          const wlEl = document.getElementById('s8-val-wl');
+          wlEl.textContent = d.wl; wlEl.style.color = d.wlColor;
+          document.getElementById('s8-val-dw').textContent = d.dw;
+          const dwCard = document.getElementById('s8-card-dw');
+          dwCard.style.background = d.dwColor === '#f87171' ? 'rgba(248,113,113,0.08)' : 'rgba(255,255,255,0.04)';
+          dwCard.style.borderColor = d.dwColor === '#f87171' ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.08)';
+          document.getElementById('s8-val-ggr').textContent = d.ggr;
+          const ggrCard = document.getElementById('s8-card-ggr');
+          ggrCard.style.background = d.ggrColor === '#f87171' ? 'rgba(248,113,113,0.08)' : 'rgba(255,255,255,0.04)';
+          ggrCard.style.borderColor = d.ggrColor === '#f87171' ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.08)';
+        }
+        s8SetPeriod('all');
+        </script>
+
+      </div>
+
+      <!-- 中：帳號 & 行為資訊 -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px 16px; flex:1;">
+          <div style="font-size:16px; font-weight:700; color:#c8d4f0; margin-bottom:12px;">🖥️ 帳號 & 登入資訊</div>
+          <div style="display:flex; flex-direction:column; gap:9px; font-size:16px;">
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">帳號狀態</span><span style="color:#34d399; font-weight:700;">ACTIVE</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">最後登入裝置</span><span style="color:#c8d4f0;">MOBILE</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">最後登入時間</span><span style="color:#c8d4f0;">2026-04-14 01:05:40</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">登入 IP</span><span style="color:#c8d4f0;">37.111.227.164</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">註冊 IP</span><span style="color:#c8d4f0;">116.58.201.100</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">Fingerprint 變化</span><span style="color:#f87171; font-weight:700;">偵測到 3 組</span></div>
+            <div style="display:flex; justify-content:space-between;"><span style="color:#445566;">出金帳號（30日）</span><span style="color:#f87171; font-weight:700;">換過 2 次</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:#445566;">關連帳號</span>
+              <span style="display:flex; align-items:center; gap:6px; color:#f87171; font-weight:700; font-size:16px;">
+                2 個
+                <span onclick="s8ShowLinked()" style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">↗</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px 16px; flex:1; display:flex; flex-direction:column; gap:10px; overflow:hidden;">
+          <div style="font-size:16px; font-weight:700; color:#c8d4f0;">🎮 押注行為</div>
+
+          <!-- 兩欄並排：終生累計 | 上次入金後 -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; flex:1; min-height:0;">
+
+            <!-- 左欄：終生累計 -->
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:13px; color:#8a9ab8; font-weight:600;">終生累計</div>
+                <div style="font-size:13px; color:#445566;">流水 <span style="color:#c8d4f0; font-weight:700;">₱3,042,429</span></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div onclick="s8ShowDetail('all','slot')" id="s8-all-slot" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.15s;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="font-size:14px; color:#8a9ab8; font-weight:700;">Slot</div>
+                    <span style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">↗</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:800; color:#c8d4f0;">72%</div>
+                    <div style="font-size:12px; color:#445566;">RTP 94.2%</div>
+                  </div>
+                </div>
+                <div onclick="s8ShowDetail('all','casino')" id="s8-all-casino" style="background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.4); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.15s;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="font-size:14px; color:#8a9ab8; font-weight:700;">Casino</div>
+                    <span style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">↗</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:800; color:#c8d4f0;">20%</div>
+                    <div style="font-size:12px; color:#f87171; font-weight:600;">RTP 103.2%</div>
+                  </div>
+                </div>
+                <div onclick="s8ShowDetail('all','free')" id="s8-all-free" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.15s;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="font-size:14px; color:#8a9ab8; font-weight:700;">Free</div>
+                    <span style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">↗</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:800; color:#c8d4f0;">8%</div>
+                    <div style="font-size:12px; color:#445566;">RTP 89.3%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右欄：上次入金後 -->
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:13px; color:#fbbf24; font-weight:600;">上次入金後 <span style="color:#445566; font-size:11px;">06-22</span></div>
+                <div style="font-size:13px; color:#445566;">流水 <span style="color:#c8d4f0; font-weight:700;">₱892,400</span></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div onclick="s8ShowDetail('last','slot')" id="s8-last-slot" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.15s;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="font-size:14px; color:#8a9ab8; font-weight:700;">Slot</div>
+                    <span style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">↗</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:800; color:#c8d4f0;">65%</div>
+                    <div style="font-size:12px; color:#445566;">RTP 93.1%</div>
+                  </div>
+                </div>
+                <div onclick="s8ShowDetail('last','casino')" id="s8-last-casino" style="background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.4); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.15s;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="font-size:14px; color:#8a9ab8; font-weight:700;">Casino</div>
+                    <span style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">↗</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:800; color:#c8d4f0;">28%</div>
+                    <div style="font-size:12px; color:#f87171; font-weight:600;">RTP 108.5%</div>
+                  </div>
+                </div>
+                <div onclick="s8ShowDetail('last','free')" id="s8-last-free" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:all 0.15s;">
+                  <div style="display:flex; align-items:center; gap:6px;">
+                    <div style="font-size:14px; color:#8a9ab8; font-weight:700;">Free</div>
+                    <span style="font-size:11px; color:#445566; border:1px solid rgba(255,255,255,0.12); border-radius:4px; width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">↗</span>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:18px; font-weight:800; color:#c8d4f0;">7%</div>
+                    <div style="font-size:12px; color:#445566;">RTP 89.3%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 大彈窗 Modal -->
+        <div id="s8-modal-overlay" onclick="s8HideDetail()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; align-items:center; justify-content:center;">
+          <div onclick="event.stopPropagation()" style="background:#0f1624; border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:28px 32px; width:560px; max-width:90vw; box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <div id="s8-modal-title" style="font-size:18px; font-weight:700;"></div>
+              <div onclick="s8HideDetail()" style="font-size:13px; color:#445566; cursor:pointer; padding:4px 12px; border:1px solid rgba(255,255,255,0.1); border-radius:6px;">✕ 關閉</div>
+            </div>
+            <div id="s8-modal-body"></div>
+          </div>
+        </div>
+
+        <script>
+        const s8GameData = {
+          all: {
+            slot:   { label:'Slot',   period:'終生累計',           rtp:'94.2%', rtpAlert:false, games:[
+              { name:'Wild Dragon',          cnt:'1,842', bet:'₱643,200',   pct:'21%', rtp:'96.1%', rtpAlert:false },
+              { name:'Lucky Fortune Cat',    cnt:'1,204', bet:'₱524,800',   pct:'17%', rtp:'94.8%', rtpAlert:false },
+              { name:'Wild Bounty Showdown', cnt:'2,318', bet:'₱1,024,600', pct:'34%', rtp:'93.2%', rtpAlert:false },
+            ]},
+            casino: { label:'Casino', period:'終生累計',           rtp:'103.2%', rtpAlert:true,  games:[
+              { name:'Baccarat',       cnt:'892', bet:'₱318,400', pct:'10%', rtp:'101.4%', rtpAlert:true  },
+              { name:'Speed Baccarat', cnt:'764', bet:'₱292,000', pct:'10%', rtp:'105.8%', rtpAlert:true  },
+            ]},
+            free:   { label:'Free',   period:'終生累計',           rtp:'89.3%', rtpAlert:false, games:[
+              { name:'Free Spins Bonus', cnt:'186', bet:'₱0', pct:'100%', rtp:'89.3%', rtpAlert:false },
+            ]},
+          },
+          last: {
+            slot:   { label:'Slot',   period:'上次入金後（06-22）', rtp:'93.1%', rtpAlert:false, games:[
+              { name:'Wild Dragon',          cnt:'214', bet:'₱182,400', pct:'36%', rtp:'96.1%', rtpAlert:false },
+              { name:'Lucky Fortune Cat',    cnt:'98',  bet:'₱96,500',  pct:'19%', rtp:'94.8%', rtpAlert:false },
+              { name:'Wild Bounty Showdown', cnt:'376', bet:'₱364,210', pct:'72%', rtp:'93.2%', rtpAlert:false },
+            ]},
+            casino: { label:'Casino', period:'上次入金後（06-22）', rtp:'108.5%', rtpAlert:true,  games:[
+              { name:'Baccarat',       cnt:'142', bet:'₱284,000', pct:'56%', rtp:'106.3%', rtpAlert:true  },
+              { name:'Speed Baccarat', cnt:'118', bet:'₱336,730', pct:'66%', rtp:'110.8%', rtpAlert:true  },
+            ]},
+            free:   { label:'Free',   period:'上次入金後（06-22）', rtp:'89.3%', rtpAlert:false, games:[
+              { name:'Free Spins Bonus', cnt:'24', bet:'₱0', pct:'100%', rtp:'89.3%', rtpAlert:false },
+            ]},
+          }
+        };
+        let s8ActivePeriod = null, s8ActiveType = null;
+        function s8ShowDetail(period, type) {
+          s8ActivePeriod = period; s8ActiveType = type;
+          const d = s8GameData[period][type];
+          const titleColor = d.rtpAlert ? '#f87171' : '#c8d4f0';
+          document.getElementById('s8-modal-title').innerHTML =
+            '<span style="color:' + titleColor + '">● ' + d.label + '</span>' +
+            '&nbsp;<span style="color:#445566; font-size:14px; font-weight:400;">' + d.period + '</span>' +
+            (d.rtpAlert ? '&nbsp;<span style="background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.4); border-radius:5px; padding:2px 10px; font-size:13px; color:#f87171; font-weight:600;">RTP 爆趴警示</span>&nbsp;<span style="font-size:12px; color:#7a4444;">▶ 建議動作：確認該遊戲是否命中 P4 2-1 遊戲失血警報；若有異常開獎事件，升級通報給 Provider</span>' : '');
+          const rows = d.games.map(g => {
+            const rtpCol = g.rtpAlert ? 'color:#f87171; font-weight:700;' : 'color:#fbbf24; font-weight:600;';
+            return '<tr style="border-top:1px solid rgba(255,255,255,0.06);">' +
+              '<td style="padding:10px 12px; color:#c8d4f0; font-size:15px;">' + g.name + '</td>' +
+              '<td style="padding:10px 12px; text-align:right; color:#8a9ab8; font-size:15px;">' + g.cnt + ' 次</td>' +
+              '<td style="padding:10px 12px; text-align:right; color:#8a9ab8; font-size:15px;">' + g.bet + '</td>' +
+              '<td style="padding:10px 12px; text-align:right; color:#8a9ab8; font-size:15px;">' + g.pct + '</td>' +
+              '<td style="padding:10px 12px; text-align:right; font-size:15px; ' + rtpCol + '">RTP ' + g.rtp + '</td>' +
+              '</tr>';
+          }).join('');
+          document.getElementById('s8-modal-body').innerHTML =
+            '<table style="width:100%; border-collapse:collapse;">' +
+            '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08);">' +
+            '<th style="font-size:13px; color:#445566; padding:6px 12px; text-align:left; font-weight:500;">遊戲名稱</th>' +
+            '<th style="font-size:13px; color:#445566; padding:6px 12px; text-align:right; font-weight:500;">押注次數</th>' +
+            '<th style="font-size:13px; color:#445566; padding:6px 12px; text-align:right; font-weight:500;">押注金額</th>' +
+            '<th style="font-size:13px; color:#445566; padding:6px 12px; text-align:right; font-weight:500;">佔比</th>' +
+            '<th style="font-size:13px; color:#445566; padding:6px 12px; text-align:right; font-weight:500;">RTP</th>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table>';
+          const overlay = document.getElementById('s8-modal-overlay');
+          overlay.style.display = 'flex';
+        }
+        function s8HideDetail() {
+          s8ActivePeriod = null; s8ActiveType = null;
+          document.getElementById('s8-modal-overlay').style.display = 'none';
+        }
+
+        const s8LinkedAccounts = [
+          { id:'PH-00319', reason:'相同 Fingerprint', detail:'3 組 Fingerprint 完全重疊', status:'ACTIVE',  riskDate:'2026-05-12', riskTag:'出入異常' },
+          { id:'PH-00751', reason:'相同出金帳號',     detail:'GCash 09XX-XXX-482 一致', status:'FROZEN',  riskDate:'2026-03-28', riskTag:'身份合規' },
+        ];
+        function s8ShowLinked() {
+          document.getElementById('s8-modal-title').innerHTML =
+            '🔗 關連帳號明細 <span style="font-size:14px; color:#445566; font-weight:400;">— PH-00482</span>';
+          const rows = s8LinkedAccounts.map(a => {
+            const statusColor = a.status === 'FROZEN' ? '#f87171' : '#34d399';
+            return '<tr style="border-top:1px solid rgba(255,255,255,0.06);">' +
+              '<td style="padding:12px 12px; color:#c8d4f0; font-size:15px; font-weight:700;">' + a.id + '</td>' +
+              '<td style="padding:12px 12px; font-size:14px;">' +
+                '<div style="color:#8a9ab8;">' + a.reason + '</div>' +
+                '<div style="color:#445566; font-size:12px; margin-top:2px;">' + a.detail + '</div>' +
+              '</td>' +
+              '<td style="padding:12px 12px; text-align:center;">' +
+                '<span style="color:' + statusColor + '; font-size:13px; font-weight:700; background:rgba(255,255,255,0.04); border-radius:5px; padding:2px 8px;">' + a.status + '</span>' +
+              '</td>' +
+              '<td style="padding:12px 12px; text-align:right;">' +
+                '<div style="font-size:12px; color:#445566;">' + a.riskDate + '</div>' +
+                '<div style="font-size:13px; color:#f87171; font-weight:600; margin-top:2px;">' + a.riskTag + '</div>' +
+              '</td>' +
+            '</tr>';
+          }).join('');
+          document.getElementById('s8-modal-body').innerHTML =
+            '<table style="width:100%; border-collapse:collapse;">' +
+            '<thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08);">' +
+            '<th style="font-size:12px; color:#445566; padding:6px 12px; text-align:left; font-weight:500;">帳號 ID</th>' +
+            '<th style="font-size:12px; color:#445566; padding:6px 12px; text-align:left; font-weight:500;">關聯原因</th>' +
+            '<th style="font-size:12px; color:#445566; padding:6px 12px; text-align:center; font-weight:500;">狀態</th>' +
+            '<th style="font-size:12px; color:#445566; padding:6px 12px; text-align:right; font-weight:500;">最近風險標記</th>' +
+            '</tr></thead><tbody>' + rows + '</tbody></table>';
+          document.getElementById('s8-modal-overlay').style.display = 'flex';
+        }
+        </script>
+
+      </div>
+
+      <!-- 右：備註 & 審核操作 -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:14px 16px; flex:1;">
+          <div style="font-size:15px; font-weight:700; color:#c8d4f0; margin-bottom:10px;">📝 風控備註</div>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:13px;">
+            <div>
+              <div style="color:#445566; margin-bottom:5px;">Risk Remarks</div>
+              <div style="background:rgba(0,0,0,0.2); border-radius:6px; padding:10px 12px; color:#8a9ab8; line-height:1.7; font-size:13px;">Suspicious Activity：相同遊戲反覆下注，疑似以最小損耗完成流水。MAC 匹配異常帳號 ×2。</div>
+            </div>
+            <div>
+              <div style="color:#445566; margin-bottom:6px;">歷史審核記錄</div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:7px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="color:#8a9ab8; font-size:13px;">2026-04-02 &nbsp;14:23:08</span>
+                    <span style="color:#fbbf24; font-size:13px; font-weight:600;">⏸ 人工審核 → 放行</span>
+                  </div>
+                  <span style="color:#c8d4f0; font-size:14px; font-weight:700;">₱18,000</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:7px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="color:#8a9ab8; font-size:13px;">2026-03-15 &nbsp;09:41:55</span>
+                    <span style="color:#34d399; font-size:13px; font-weight:600;">✅ 自動放行</span>
+                  </div>
+                  <span style="color:#c8d4f0; font-size:14px; font-weight:700;">₱12,500</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:7px; padding:8px 10px; display:flex; justify-content:space-between; align-items:center;">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="color:#8a9ab8; font-size:13px;">2026-02-28 &nbsp;17:05:32</span>
+                    <span style="color:#34d399; font-size:13px; font-weight:600;">✅ 自動放行</span>
+                  </div>
+                  <span style="color:#c8d4f0; font-size:14px; font-weight:700;">₱9,800</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: P4 即時 TG 警報系統（合併版） -->
+  <div class="slide" id="slide-9">
+    <div class="slide-num-badge">09 / 10</div>
+    <div class="tag">Module P4</div>
+    <h2 style="margin-bottom:8px; font-size:40px;">即時 TG 警報系統 <span style="font-size:18px; font-weight:400; color:#8a9ab8;">（平台企劃提供）</span></h2>
+    <div class="accent-line" style="margin-bottom:14px;"></div>
+
+    <div style="flex:1; overflow:auto; min-height:0;">
+      <table style="font-size:15px;">
+        <thead>
+          <tr>
+            <th style="width:4%; padding:8px 10px;">#</th>
+            <th style="width:8%; padding:8px 10px;">類別</th>
+            <th style="width:15%; padding:8px 10px;">警報名稱</th>
+            <th style="width:6%; padding:8px 10px;">等級</th>
+            <th style="width:7%; padding:8px 10px;">視窗</th>
+            <th style="width:28%; padding:8px 10px;">觸發閥值</th>
+            <th style="width:26%; padding:8px 10px;">業務意涵</th>
+            <th style="width:6%; padding:8px 10px;">數據</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 金流監控 -->
+          <tr>
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">1-1</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">💳 金流</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#c8d4f0;">單筆大額提領</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-yellow" style="font-size:13px;">S2</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">即時</td>
+            <td style="color:#fbbf24; font-family:monospace; padding:9px 10px;">≥ 30,000 PHP</td>
+            <td style="color:#5a6a88; padding:9px 10px;">單筆提領超門檻，觸發人工 KYC 審核</td>
+            <td style="padding:9px 10px;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span></td>
+          </tr>
+          <tr>
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">1-2</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">💳 金流</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#c8d4f0;">累積大額提領</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-yellow" style="font-size:13px;">S2</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">24h</td>
+            <td style="color:#fbbf24; font-family:monospace; padding:9px 10px;">≥ 50,000 PHP（≥2筆）</td>
+            <td style="color:#5a6a88; padding:9px 10px;">防止小額多筆繞過單筆閥值的分拆行為</td>
+            <td style="padding:9px 10px;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span></td>
+          </tr>
+          <tr style="background:rgba(248,113,113,0.04);">
+            <td style="color:#f87171; font-weight:700; padding:9px 10px;">1-3</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">💳 金流</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#c8d4f0;">高頻存提異常</strong> <span style="font-size:12px; color:#f87171;">⚠ 洗錢</span></td>
+            <td style="padding:9px 10px;"><span class="badge badge-red" style="font-size:13px;">S1</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">2hr</td>
+            <td style="font-family:monospace; font-size:13px; color:#f87171; padding:9px 10px;">Turnover &lt; 1.0x · 提款 ≥ 80% 存款 · 間隔 ≤ 2h</td>
+            <td style="color:#5a6a88; padding:9px 10px;">典型洗錢信號：存入後幾乎不下注即提出</td>
+            <td style="padding:9px 10px;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span></td>
+          </tr>
+          <tr style="opacity:0.65;">
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">1-4</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">💳 金流</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#8090a8;">金流通道異常</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-red" style="font-size:13px;">S1</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">30m</td>
+            <td style="font-family:monospace; font-size:13px; color:#667a88; padding:9px 10px;">30m 內最後 10 筆全部 FAIL（存提分開算）</td>
+            <td style="color:#5a6a88; padding:9px 10px;">PSP 金流通道掛掉，需立即切換備援路由</td>
+            <td style="padding:9px 10px;"><span class="badge badge-gray" style="font-size:12px;">系統</span></td>
+          </tr>
+          <!-- 遊戲監控 -->
+          <tr>
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">2-1</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">🎮 遊戲</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#c8d4f0;">單一遊戲失血</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-yellow" style="font-size:13px;">S2</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">2hr</td>
+            <td style="color:#fbbf24; font-family:monospace; padding:9px 10px;">淨虧 &gt; 100,000 PHP</td>
+            <td style="color:#5a6a88; padding:9px 10px;">單款遊戲短時間大量吐分，排查 Jackpot / 數學模型異常</td>
+            <td style="padding:9px 10px;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span></td>
+          </tr>
+          <tr>
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">2-2</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">🎮 遊戲</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#c8d4f0;">單一玩家爆贏</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-yellow" style="font-size:13px;">S2</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">1hr</td>
+            <td style="color:#fbbf24; font-family:monospace; padding:9px 10px;">淨贏 &gt; 30,000 PHP</td>
+            <td style="color:#5a6a88; padding:9px 10px;">關注異常大贏玩家，輔助出金審核決策</td>
+            <td style="padding:9px 10px;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span></td>
+          </tr>
+          <tr>
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">2-3</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">🎮 遊戲</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#c8d4f0;">超高倍率中獎</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-yellow" style="font-size:13px;">S2</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">10m</td>
+            <td style="font-family:monospace; font-size:13px; color:#fbbf24; padding:9px 10px;">&gt;2000x ≥2次 · 或 &gt;1000x ≥5次 · 或單筆 ≥100k PHP</td>
+            <td style="color:#5a6a88; padding:9px 10px;">高倍率集中爆發，偵測 RNG 異常或遊戲 Bug</td>
+            <td style="padding:9px 10px;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span></td>
+          </tr>
+          <tr style="opacity:0.65;">
+            <td style="color:#5b9fff; font-weight:700; padding:9px 10px;">2-4</td>
+            <td style="padding:9px 10px;"><span style="font-size:13px; color:#5a6a88;">🎮 遊戲</span></td>
+            <td style="padding:9px 10px;"><strong style="color:#8090a8;">遊戲登入異常</strong></td>
+            <td style="padding:9px 10px;"><span class="badge badge-red" style="font-size:13px;">S1</span></td>
+            <td style="color:#94a3b8; padding:9px 10px;">10m</td>
+            <td style="font-family:monospace; font-size:13px; color:#667a88; padding:9px 10px;">連續登入失敗 ≥ 10 次</td>
+            <td style="color:#5a6a88; padding:9px 10px;">Provider API 中斷，需立即下架該廠商遊戲</td>
+            <td style="padding:9px 10px;"><span class="badge badge-gray" style="font-size:12px;">系統</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="display:flex; align-items:center; gap:5px; font-size:13px; color:#667a88;"><span class="badge badge-red" style="font-size:12px;">S1</span> 立即處理</div>
+      <div style="display:flex; align-items:center; gap:5px; font-size:13px; color:#667a88;"><span class="badge badge-yellow" style="font-size:12px;">S2</span> 觀察排程</div>
+      <div style="display:flex; align-items:center; gap:5px; font-size:13px; color:#667a88;"><span class="badge badge-green" style="font-size:12px;">✓ 數據</span> Data Team 可驗證（6 條）</div>
+      <div style="display:flex; align-items:center; gap:5px; font-size:13px; color:#667a88;"><span class="badge badge-gray" style="font-size:12px;">系統</span> RD 系統層實作（2 條，灰色顯示）</div>
+      <div style="margin-left:auto; font-size:13px; color:#334d66;">Cool-down 45min · Redis 即時計算 &nbsp;|&nbsp; <span style="color:#f87171;">S1：值班人員 <strong>30 分鐘內</strong>介入，必要時暫停出金通道</span></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: 待討論 & 下一步 -->
+  <div class="slide" id="slide-10">
+    <div class="slide-num-badge">10 / 10</div>
+    <div class="tag">Next Steps</div>
+
+    <h2>待討論事項 &amp; 下一步</h2>
+    <div class="grid-2">
+      <div>
+        <div style="font-size: 19px; font-weight:700; color:#fbbf24; letter-spacing:1px; margin-bottom:14px;">⏳ 待討論（需與 RD 確認）</div>
+        <ul class="pending-list">
+          <li><span>🔑</span> Password hash 欄位：是否可新增用於多帳號比對</li>
+          <li><span>📱</span> UDID：設備識別碼是否可取得</li>
+          <li><span>⚙️</span> resolution 欄位：RD 確認可用時程</li>
+          <li><span>🎁</span> 獎金濫用嫌疑標籤：待 Bonus 機制規劃後補定義</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-size: 19px; font-weight:700; color:#34d399; letter-spacing:1px; margin-bottom:14px;">✅ 建議推進順序</div>
+        <ul class="pending-list">
+          <li><span>1️⃣</span> 與 RD 確認 player_risk_snapshot Table 規格</li>
+          <li><span>2️⃣</span> P1 放行條件上線（先跑 KYC + 首次出金判斷）</li>
+          <li><span>3️⃣</span> P2 標籤①②③④⑤ 計算邏輯部署</li>
+          <li><span>4️⃣</span> P3 Dashboard 指標對接 RD 串接</li>
+          <li><span>5️⃣</span> P4 TG BOT 上線：Redis 規則部署 + S1 值班 SOP 確認</li>
+        </ul>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size: 19px; color:#334455; text-align:center;">Data Team &nbsp;|&nbsp; JC PH Risk Control Support Proposal &nbsp;|&nbsp; 2026.06</div>
+  </div>
+
+</div><!-- /deck -->
+
+<nav class="nav">
+  <button id="btn-prev" onclick="changeSlide(-1)" disabled>‹</button>
+  <div class="dot-nav" id="dots"></div>
+  <span class="slide-counter" id="counter">1 / 10</span>
+  <button id="btn-next" onclick="changeSlide(1)">›</button>
+</nav>
+
+<script>
+  const TOTAL = 10;
+  let current = 1;
+
+  const dotsEl = document.getElementById('dots');
+  for (let i = 1; i <= TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    dotsEl.children[current - 1].classList.remove('active');
+    current = Math.max(1, Math.min(TOTAL, n));
+    document.getElementById('slide-' + current).classList.add('active');
+    dotsEl.children[current - 1].classList.add('active');
+    document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+    document.getElementById('btn-prev').disabled = current === 1;
+    document.getElementById('btn-next').disabled = current === TOTAL;
+  }
+
+  function changeSlide(dir) { goTo(current + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>

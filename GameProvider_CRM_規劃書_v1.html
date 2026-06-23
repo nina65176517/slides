@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combo CRM × AI 規劃書 · v1.0</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #07111c;
+    --bg2: #0c1a28;
+    --bg3: #101f30;
+    --border: rgba(255,255,255,0.07);
+    --teal: #00c8a0;
+    --blue: #4a9eff;
+    --yellow: #fbbf24;
+    --red: #ef4444;
+    --purple: #a78bfa;
+    --text: #d8eaf8;
+    --text-dim: #8aaac8;
+    --text-bright: #f0f8ff;
+    --sidebar-w: 240px;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif; display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w); flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    position: fixed; top: 0; left: 0; bottom: 0; overflow-y: auto;
+    display: flex; flex-direction: column; padding: 28px 0 20px;
+    z-index: 100;
+  }
+  .sidebar-brand { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+  .sidebar-brand .doc-tag { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--teal); text-transform: uppercase; margin-bottom: 6px; }
+  .sidebar-brand .doc-title { font-size: 14px; font-weight: 700; color: var(--text-bright); line-height: 1.4; }
+  .sidebar-brand .doc-meta { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+  .sidebar-nav { padding: 16px 0; flex: 1; }
+  .nav-section { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #8aaac8; text-transform: uppercase; padding: 10px 20px 4px; }
+  .nav-item { display: block; padding: 8px 20px; font-size: 13px; color: var(--text-dim); text-decoration: none; border-left: 2px solid transparent; transition: all .15s; line-height: 1.4; }
+  .nav-item:hover { color: var(--teal); background: rgba(0,200,160,0.05); border-left-color: var(--teal); }
+  .nav-item.active { color: var(--teal); border-left-color: var(--teal); background: rgba(0,200,160,0.07); }
+  .nav-sub { font-size: 11px; color: #8aaac8; padding-left: 8px; }
+
+  /* ── MAIN CONTENT ── */
+  .main { margin-left: var(--sidebar-w); flex: 1; padding: 56px 64px 120px; }
+
+  /* ── TOP HEADER ── */
+  .doc-header { margin-bottom: 56px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .doc-header .category { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--teal); text-transform: uppercase; margin-bottom: 14px; }
+  .doc-header h1 { font-size: 44px; font-weight: 800; color: var(--text-bright); line-height: 1.15; margin-bottom: 16px; }
+  .doc-header .tagline { font-size: 16px; color: var(--text-dim); line-height: 1.65; max-width: 600px; }
+  .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 28px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .meta-cell { padding: 12px 16px; border-right: 1px solid var(--border); }
+  .meta-cell:last-child { border-right: none; }
+  .meta-cell .label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #8aaac8; text-transform: uppercase; margin-bottom: 4px; }
+  .meta-cell .value { font-size: 13px; color: var(--text); font-weight: 600; }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 64px; scroll-margin-top: 32px; }
+  .section-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .section-num { font-size: 12px; font-weight: 800; color: var(--teal); letter-spacing: 2px; flex-shrink: 0; }
+  .section-title { font-size: 24px; font-weight: 700; color: var(--text-bright); }
+  .section-sub { font-size: 15px; color: var(--text); margin-bottom: 20px; line-height: 1.65; }
+
+  /* ── SUBSECTION ── */
+  .sub-section { margin-bottom: 28px; }
+  .sub-title { font-size: 14px; font-weight: 700; color: var(--teal); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(0,200,160,0.15); }
+
+  /* ── CARDS & CALLOUTS ── */
+  .card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; }
+  .card:last-child { margin-bottom: 0; }
+  .card-title { font-size: 13px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }
+  .card-body { font-size: 15px; color: var(--text); line-height: 1.7; }
+
+  .callout { border-radius: 8px; padding: 14px 18px; margin-bottom: 14px; font-size: 14px; line-height: 1.65; }
+  .callout:last-child { margin-bottom: 0; }
+  .callout-teal   { background: rgba(0,200,160,0.06);  border-left: 3px solid var(--teal);   color: var(--text); }
+  .callout-blue   { background: rgba(74,158,255,0.06); border-left: 3px solid var(--blue);   color: var(--text); }
+  .callout-yellow { background: rgba(251,191,36,0.06); border-left: 3px solid var(--yellow); color: var(--text); }
+  .callout-red    { background: rgba(239,68,68,0.06);  border-left: 3px solid var(--red);    color: var(--text); }
+  .callout strong { color: var(--text-bright); }
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { background: rgba(0,200,160,0.06); color: var(--teal); font-size: 14px; letter-spacing: 1px; text-transform: uppercase; padding: 10px 14px; text-align: left; border-bottom: 1px solid rgba(0,200,160,0.2); white-space: nowrap; }
+  td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text); vertical-align: top; line-height: 1.6; }
+  td code { font-size: 15px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  td strong { color: var(--text); }
+
+  /* ── BADGES ── */
+  .badge { display: inline-block; border-radius: 4px; font-size: 11px; font-weight: 700; padding: 2px 9px; white-space: nowrap; }
+  .b-teal   { background: rgba(0,200,160,0.12);  border: 1px solid rgba(0,200,160,0.3);  color: var(--teal); }
+  .b-blue   { background: rgba(74,158,255,0.12); border: 1px solid rgba(74,158,255,0.3); color: var(--blue); }
+  .b-yellow { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.3); color: var(--yellow); }
+  .b-red    { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red); }
+  .b-purple { background: rgba(167,139,250,0.12);border: 1px solid rgba(167,139,250,0.3);color: var(--purple); }
+  .b-gray   { background: rgba(148,163,184,0.08);border: 1px solid rgba(148,163,184,0.2);color: #94a3b8; }
+
+  /* ── GRID LAYOUTS ── */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+
+  /* ── DIMENSION BLOCKS ── */
+  .dim-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+  .dim { border-radius: 8px; padding: 14px 14px; }
+  .dim-v { background: rgba(251,191,36,0.07);  border: 1px solid rgba(251,191,36,0.2);  }
+  .dim-e { background: rgba(74,158,255,0.07);  border: 1px solid rgba(74,158,255,0.2);  }
+  .dim-l { background: rgba(0,200,160,0.07);   border: 1px solid rgba(0,200,160,0.2);   }
+  .dim-r { background: rgba(239,68,68,0.07);   border: 1px solid rgba(239,68,68,0.2);   }
+  .dim-g { background: rgba(167,139,250,0.07); border: 1px solid rgba(167,139,250,0.2); }
+  .dim-code { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
+  .dim-v .dim-code { color: var(--yellow); }
+  .dim-e .dim-code { color: var(--blue); }
+  .dim-l .dim-code { color: var(--teal); }
+  .dim-r .dim-code { color: var(--red); }
+  .dim-g .dim-code { color: var(--purple); }
+  .dim-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .dim-desc { font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+
+  /* ── PLAYER EXAMPLE ── */
+  .player-box { border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .player-id { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+  .score-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .sc { font-size: 12px; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+  .player-strat { font-size: 13px; color: var(--text-dim); line-height: 1.55; }
+
+  /* ── ROADMAP PHASES ── */
+  .phase-block { border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; }
+  .phase-1 { background: rgba(74,158,255,0.06);  border: 1px solid rgba(74,158,255,0.18);  }
+  .phase-2 { background: rgba(0,200,160,0.06);   border: 1px solid rgba(0,200,160,0.18);   }
+  .phase-3 { background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.18); }
+  .phase-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .phase-title { font-size: 16px; font-weight: 700; }
+  .phase-1 .phase-title { color: var(--blue); }
+  .phase-2 .phase-title { color: var(--teal); }
+  .phase-3 .phase-title { color: var(--purple); }
+  .phase-period { font-size: 12px; font-weight: 600; opacity: .7; }
+  .phase-items { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; }
+  .phase-item { font-size: 13px; color: var(--text-dim); padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; gap: 8px; align-items: flex-start; }
+  .phase-item::before { content: '·'; color: var(--teal); flex-shrink: 0; }
+
+  /* ── KPI BLOCKS ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .kpi-card { border-radius: 8px; padding: 16px; text-align: center; }
+  .kpi-card .num { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .kpi-card .lbl { font-size: 12px; color: var(--text-dim); }
+  .kpi-card .note { font-size: 11px; margin-top: 6px; font-weight: 600; }
+
+  /* ── ARCH FLOW ── */
+  .arch-flow { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
+  .arch-row { border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 16px; }
+  .arch-l1 { background: rgba(74,158,255,0.06);  border: 1px solid rgba(74,158,255,0.18); }
+  .arch-l2 { background: rgba(0,200,160,0.06);   border: 1px solid rgba(0,200,160,0.18); }
+  .arch-l3 { background: rgba(251,191,36,0.06);  border: 1px solid rgba(251,191,36,0.18); }
+  .arch-icon { font-size: 20px; flex-shrink: 0; }
+  .arch-label { font-size: 15px; font-weight: 700; min-width: 180px; flex-shrink: 0; }
+  .arch-l1 .arch-label { color: var(--blue); }
+  .arch-l2 .arch-label { color: var(--teal); }
+  .arch-l3 .arch-label { color: var(--yellow); }
+  .arch-content { font-size: 13px; color: var(--text-dim); line-height: 1.55; flex: 1; }
+  .arch-badge { flex-shrink: 0; }
+  .arch-arrow { text-align: center; font-size: 16px; color: #1a3050; padding: 2px 0; }
+
+  /* ── OPEN QUESTIONS ── */
+  .oq-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.6; }
+  .oq-item:last-child { border-bottom: none; }
+  .oq-tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; height: fit-content; margin-top: 2px; }
+  .oq-text { color: var(--text-dim); }
+  .oq-text strong { color: var(--text); }
+
+  /* ── FOOTER ── */
+  .doc-footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 12px; color: #8aaac8; text-align: center; }
+
+  /* ── INLINE LIST ── */
+  .ilist { list-style: none; }
+  .ilist li { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; color: var(--text-dim); line-height: 1.55; }
+  .ilist li:last-child { border-bottom: none; }
+  .ilist li::before { content: '›'; color: var(--teal); flex-shrink: 0; }
+  .ilist li strong { color: var(--text); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1a3050; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ SIDEBAR ══════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="doc-tag">CRM Strategy</div>
+    <div class="doc-title">Combo CRM × AI 規劃書</div>
+    <div class="doc-meta">VERSION v1.0 · 2026 · PH</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">文件導覽</div>
+    <a href="#s01" class="nav-item">01 · 策略思路</a>
+    <a href="#s02" class="nav-item">02 · 數據基礎</a>
+    <a href="#s03" class="nav-item">03 · 整體架構</a>
+    <a href="#s04" class="nav-item">04 · 玩家 DNA 分群</a>
+    <a href="#s05" class="nav-item">05 · 遊戲媒合引擎</a>
+    <a href="#s06" class="nav-item">06 · AI 留存預測</a>
+    <a href="#s07" class="nav-item">07 · 風控整合層</a>
+    <a href="#s08" class="nav-item">08 · Roadmap</a>
+    <a href="#s09" class="nav-item">09 · KPI 體系</a>
+    <a href="#s10" class="nav-item">10 · 待確認事項</a>
+  </nav>
+</aside>
+
+<!-- ══════════ MAIN ══════════ -->
+<main class="main">
+
+  <!-- HEADER -->
+  <div class="doc-header">
+    <div class="category">Game Provider · CRM Strategy Proposal</div>
+    <h1>Combo CRM × AI 規劃書</h1>
+    <div class="meta-grid">
+      <div class="meta-cell"><div class="label">文件類型</div><div class="value">策略規劃書</div></div>
+      <div class="meta-cell"><div class="label">北極星</div><div class="value">玩家留存率</div></div>
+      <div class="meta-cell"><div class="label">市場</div><div class="value">東南亞</div></div>
+      <div class="meta-cell"><div class="label">版本</div><div class="value">v1.0 · 2026</div></div>
+    </div>
+  </div>
+
+  <!-- ══ 01 策略思路 ══ -->
+  <div class="section" id="s01">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <span class="section-title">策略思路</span>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">核心命題</div>
+      <p class="section-sub">讓每一個喜歡我們遊戲的玩家，<strong style="color:var(--text-bright);">持續選擇我們的遊戲</strong>。本規劃以玩家留存為單一北極星，透過數據與 AI 建立遊戲商專屬的 CRM 體系。</p>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">四個核心判斷</div>
+      <div class="g2">
+        <div class="callout callout-teal">
+          <strong>① 以提升玩家次日留存為首要目標</strong><br>
+          次日留存（D1 Retention）是最早能感知的健康訊號。D1 不過關，後續所有 LTV 和 GGR 預測都是空談。以 D1 為錨點設計策略，才能快速驗證、快速迭代。
+        </div>
+        <div class="callout callout-yellow">
+          <strong>② 流失可以預測，更可以干預</strong><br>
+          玩家流失前 7–14 天，行為數據已出現訊號。AI 能在人工發現之前識別，並提前觸發挽回策略，把被動處理變成主動防守。
+        </div>
+        <div class="callout callout-blue">
+          <strong>③ 個人化是差異化的核心</strong><br>
+          同樣是「大客」，高風險客和低風險客、愛高波動和愛低波動的玩家，需要完全不同的策略。單因子大中小客分法做不到這個精度，複合 DNA 才能。
+        </div>
+        <div class="callout callout-teal">
+          <strong>④ 串接平台商數據獲得更完整的玩家面向</strong><br>
+          我們自身擁有遊戲內行為數據（Spin 級別），但缺少玩家的入出金、帳號年資、KYC 狀態。透過串接平台商（JC、UFA 等）數據，才能建立完整的玩家 360° 視圖，讓風控與 CRM 策略更精準。
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">決策前提總表</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>維度</th><th>決定</th></tr></thead>
+          <tbody>
+            <tr><td><strong>北極星指標</strong></td><td>玩家對我們遊戲的留存率（Game-level Retention，非平台 D1）</td></tr>
+            <tr><td><strong>次要指標</strong></td><td>玩家終身 GGR（LTV）· 每活躍玩家平均 GGR</td></tr>
+            <tr><td><strong>分群策略</strong></td><td>5 維複合評分（V/E/L/R/G），取代大中小客單因子分法</td></tr>
+            <tr><td><strong>AI 應用</strong></td><td>流失預警（LightGBM）· 遊戲推薦引擎（協同過濾）· RTP 異常偵測</td></tr>
+            <tr><td><strong>風控邏輯</strong></td><td>風控評分在所有 CRM 促銷觸發之前執行，高風險玩家自動排除</td></tr>
+            <tr><td><strong>數據粒度</strong></td><td>玩家明細（player_id × game_id × bet × win × timestamp）</td></tr>
+            <tr><td><strong>推進方式</strong></td><td>三個 Phase，約 6 個月，數據組主導建模，RD 最小化介入</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 02 數據基礎 ══ -->
+  <div class="section" id="s02">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <span class="section-title">數據基礎</span>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">CMB 現有數據資源盤點</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>狀態</th><th>表名稱</th><th>中文說明</th><th>CRM 用途</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge b-teal">✅ 已有</span></td>
+              <td><code style="color:var(--teal);font-size:15px;">cmb_game_transaction</code></td>
+              <td>遊戲交易 RawData</td>
+              <td>GGR · Spin 頻率 · 押注段 · 波動度 · 留存計算來源</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-teal">✅ 已有</span></td>
+              <td><code style="color:var(--teal);font-size:15px;">cmb_game_tracker</code></td>
+              <td>玩家登入遊戲紀錄</td>
+              <td>Session 分析 · 登入頻率 · E 維度</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-teal">✅ 已有</span></td>
+              <td><code style="color:var(--teal);font-size:15px;">cmb_slot_freespin_receives</code></td>
+              <td>玩家獲得 FreeSpin 紀錄</td>
+              <td>促銷反應率 · 玩家激勵敏感度</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-teal">✅ 已有</span></td>
+              <td><code style="color:var(--teal);font-size:15px;">cmb_autospin_setting<br>cmb_slot_client_click</code></td>
+              <td>遊戲行為細節</td>
+              <td>沉浸度分析 · 自動旋轉玩家識別</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.3);">⚠️ 需追加</span></td>
+              <td><code style="color:var(--yellow);font-size:15px;">jc_inflow_transaction<br>jc_outflow_transaction</code></td>
+              <td>入金 / 出金紀錄（平台商側）</td>
+              <td>D/W 比計算 · R 維度 · 洗注偵測</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.3);">⚠️ 需追加</span></td>
+              <td><code style="color:var(--yellow);font-size:15px;">jc_account_create<br>jc_kyc_settle</code></td>
+              <td>玩家創帳 / KYC（平台商側）</td>
+              <td>玩家年資 · L 維度 · 身份合規查核</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout" style="background:rgba(251,191,36,0.06); border-left:3px solid var(--yellow); color:#a89060; margin-top:12px; font-size:13px;">
+        <strong>⚠️ 金流數據追加說明：</strong>D/W 比（出金÷入金）是 R 風險維度的核心指標，但 CMB 遊戲商側不直接持有入出金數據，需向平台商（JC）申請跨表串接。這是整個 CRM 體系唯一的外部數據依賴項，需優先確認取得路徑。
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">數據能回答的關鍵業務問題</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>業務問題</th><th>數據答案</th><th>應用模塊</th></tr></thead>
+          <tbody>
+            <tr><td>他是高價值玩家嗎？</td><td>GGR 貢獻 × 活躍頻率 × 遊戲廣度 × 年資</td><td>§04 DNA 分群</td></tr>
+            <tr><td>他適合玩哪款遊戲？</td><td>歷史遊戲偏好 + 波動度行為 + 同類玩家路徑</td><td>§05 遊戲媒合</td></tr>
+            <tr><td>哪款遊戲留存最好？</td><td>各機台 7 / 30 天回訪率 + 平均 Session 時長</td><td>§05 遊戲健康</td></tr>
+            <tr><td>這個玩家會流失嗎？</td><td>近 14 天 Spin 頻率趨勢 + 平均注額變化</td><td>§06 流失預警</td></tr>
+            <tr><td>這個行為是洗注嗎？</td><td>Turnover 倍率 + GGR% + 出入金間隔</td><td>§07 風控層</td></tr>
+            <tr><td>機台 RTP 是否異常？</td><td>實際 RTP vs 設計 RTP 偏差 + 時段滾動計算</td><td>§07 RTP 監控</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-teal">
+        <strong>結論：</strong>我們不缺數據，缺的是把數據系統化轉化為行動的能力。CRM × AI 體系就是建立這個轉化鏈路。
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">核心數據表規格 · player_behavior_snapshot（每日更新）</div>
+      <p style="font-size:13px; color:var(--text-dim); margin-bottom:14px;">所有 AI 模型的計算結果統一寫回此表，CRM 行動層讀取此表驅動個人化策略。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>寫入層</th><th>DNA 維度</th><th>欄位名稱</th><th>說明</th><th>狀態</th></tr></thead>
+          <tbody>
+            <tr>
+              <td rowspan="13" style="color:var(--blue);font-weight:700;">Layer 1<br><span style="font-size:13px;font-weight:400;color:var(--text-dim);">數據層寫入<br>每日 01:00</span></td>
+              <td rowspan="2" style="color:var(--text-dim);">基礎識別</td>
+              <td><code>player_id</code></td>
+              <td>玩家唯一識別碼</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td><code>snapshot_date</code></td>
+              <td>快照日期</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td rowspan="3" style="color:var(--yellow);">V 價值</td>
+              <td><code>grr_7d</code></td>
+              <td>近 7 天 GGR（短期近況偵測）</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td><code>grr_30d</code></td>
+              <td>近 30 天 GGR</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td><code>grr_90d</code></td>
+              <td>近 90 天 GGR（長期價值基準）</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td rowspan="4" style="color:var(--blue);">E 參與</td>
+              <td><code>spin_count_30d</code></td>
+              <td>近 30 天總押注次數</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td><code>active_days_30d</code></td>
+              <td>近 30 天有押注的天數</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td><code>avg_session_min</code></td>
+              <td>平均每次登入遊玩時長（分鐘）</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td><code>game_count_30d</code></td>
+              <td>近 30 天遊玩過的不同遊戲數</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--purple);">G 遊戲DNA</td>
+              <td><code>preferred_volatility</code></td>
+              <td>偏好波動度（低 / 中 / 高）</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--teal);">L 忠誠</td>
+              <td><code>active_weeks / tenure_days</code></td>
+              <td>連續活躍週數 / 首次登入至今天數</td>
+              <td><span style="color:var(--yellow);">⚠️</span> <span style="color:var(--text-dim);">年資需平台商帳號資料</span></td>
+            </tr>
+            <tr>
+              <td rowspan="2" style="color:var(--red);">R 風險</td>
+              <td><code>dw_ratio_30d</code></td>
+              <td>近 30 天出金 ÷ 入金比值</td>
+              <td><span style="color:var(--yellow);">⚠️</span> <span style="color:var(--text-dim);">需平台商金流資料</span></td>
+            </tr>
+            <tr>
+              <td><code>ggr_pct_30d</code></td>
+              <td>近 30 天 GGR 佔押注量百分比（洗注偵測用）</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td rowspan="5" style="color:var(--teal);font-weight:700;">Layer 2<br><span style="font-size:13px;font-weight:400;color:var(--text-dim);">智能層寫回<br>每日 02:00–03:00</span></td>
+              <td style="color:var(--text-dim);">V/E/L/R/G<br>複合評分</td>
+              <td><code>dna_v / dna_e / dna_l / dna_r / dna_g</code></td>
+              <td>將 L1 原始指標轉換為 1–5 評分</td>
+              <td><span style="color:var(--yellow);">⚠️</span> <span style="color:var(--text-dim);">dna_l / dna_r 待 JC 資料補齊</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--purple);">遊戲推薦</td>
+              <td><code>recommended_games</code></td>
+              <td>推薦引擎輸出的 Top 3 機台</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-dim);">流失預測</td>
+              <td><code>churn_score</code></td>
+              <td>7天流失機率分數（0–100，LightGBM）</td>
+              <td><span style="color:var(--teal);">✅</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--red);">風控判定</td>
+              <td><code>risk_flag</code></td>
+              <td>規則判定：洗注 / 高D/W / 帳號頻繁更換</td>
+              <td><span style="color:var(--yellow);">⚠️</span> <span style="color:var(--text-dim);">需平台商金流資料</span></td>
+            </tr>
+            <tr>
+              <td rowspan="2" style="color:var(--yellow);font-weight:700;">Layer 3<br><span style="font-size:13px;font-weight:400;color:var(--text-dim);">行動層即時判斷<br>觸發當下執行</span></td>
+              <td style="color:var(--text-dim);">CRM 資格</td>
+              <td><code>crm_eligible</code></td>
+              <td>是否具備 CRM 促銷資格（0 / 1）<br><span style="color:var(--text-dim);">依 risk_flag 判斷，命中則封鎖</span></td>
+              <td><span style="color:var(--yellow);">⚠️</span> <span style="color:var(--text-dim);">依賴 risk_flag</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--text-dim);">介入版本</td>
+              <td><code>crm_tier</code></td>
+              <td>依玩家近 24hr RTP 決定介入策略版本<br><span style="color:var(--text-dim);">RTP 偏低 → 優化機率版本；正常 → 標準策略</span></td>
+              <td><span style="color:var(--teal);">✅</span> <span style="color:var(--text-dim);">即時從 cmb_game_transaction 計算</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:20px; margin-top:10px; font-size:15px; color:var(--text-dim);">
+        <span><span style="color:var(--teal);">✅ CMB 現有數據可計算</span></span>
+        <span><span style="color:var(--yellow);">⚠️ 需追加平台商金流 / 帳號資料</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 03 整體架構 ══ -->
+  <div class="section" id="s03">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <span class="section-title">整體架構</span>
+    </div>
+    <p class="section-sub">三層系統架構，以 player_behavior_snapshot 為核心數據契約，跨層分批寫入、統一讀取。</p>
+
+    <div class="arch-flow">
+      <div class="arch-row arch-l1">
+        <div class="arch-icon">🗄️</div>
+        <div class="arch-label">Layer 1 · 數據層</div>
+        <div class="arch-content">
+          原始事件（cmb_game_transaction / cmb_game_tracker）清洗聚合<br>
+          → <strong>寫入 snapshot 行為特徵欄位</strong>：GGR / Spin數 / Session時長 / 遊戲廣度 / 偏好波動度<br>
+          <span style="font-size:14px; color:#8aaac8;">⚠️ D/W比 待平台商金流串接後補齊</span>
+        </div>
+        <div class="arch-badge"><span class="badge b-blue">每日 01:00</span></div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row arch-l2">
+        <div class="arch-icon">🧠</div>
+        <div class="arch-label">Layer 2 · 智能層</div>
+        <div class="arch-content">
+          讀取 snapshot 行為特徵 → AI 模型批次推論<br>
+          → <strong>寫回 snapshot AI 結果欄位</strong>：dna_v/e/l/r/g · churn_score · recommended_games · risk_flag<br>
+          <span style="font-size:14px; color:#8aaac8;">模型：LightGBM（流失）/ 協同過濾（推薦）/ Z-Score（RTP異常）</span>
+        </div>
+        <div class="arch-badge"><span class="badge b-teal">每日 02:00–03:00</span></div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row arch-l3">
+        <div class="arch-icon">⚡</div>
+        <div class="arch-label">Layer 3 · 行動層</div>
+        <div class="arch-content">
+          讀取 snapshot（DNA + churn_score + risk_flag）→ <strong>即時查詢玩家近 24hr RTP</strong><br>
+          → 判斷 CRM 資格（crm_eligible）與介入版本（crm_tier）<br>
+          &nbsp;&nbsp;&nbsp;· 玩家近期 RTP 偏低（輸錢中）→ 給較優機率版本 + 推親和力高的機台<br>
+          &nbsp;&nbsp;&nbsp;· 玩家近期 RTP 正常 → 維持標準機率 + 推薦未遊玩的高匹配機台<br>
+          &nbsp;&nbsp;&nbsp;· risk_flag 命中 → crm_eligible = 0，所有 CRM 介入封鎖<br>
+          <span style="font-size:14px; color:#8aaac8;">效果回饋 → 模型迭代（下一輪 Layer 2 更新）</span>
+        </div>
+        <div class="arch-badge"><span class="badge b-yellow">即時觸發</span></div>
+      </div>
+    </div>
+
+    <div class="callout callout-blue" style="margin-bottom:20px;">
+      <strong>player_behavior_snapshot 的角色：</strong>這張表不屬於任何單一層，而是三層之間的共用數據契約。Layer 1 寫行為特徵、Layer 2 寫 AI 結果、Layer 3 讀取完整快照執行策略。每日更新完成後，每個玩家在這張表裡就是一個完整的「當日狀態快照」。
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>模塊</th><th>所在層</th><th>核心輸出</th><th>寫入 snapshot 欄位</th></tr></thead>
+        <tbody>
+          <tr><td><strong>① 玩家 DNA 分群</strong></td><td>Layer 2</td><td>V/E/L/R/G 複合標籤</td><td>dna_v / dna_e / dna_l / dna_r / dna_g</td></tr>
+          <tr><td><strong>② 遊戲媒合引擎</strong></td><td>Layer 2</td><td>Top 3 推薦機台清單</td><td>recommended_games</td></tr>
+          <tr><td><strong>③ AI 留存預測</strong></td><td>Layer 2 → Layer 3</td><td>churn_score + 干預觸發</td><td>churn_score</td></tr>
+          <tr><td><strong>④ 風控整合</strong></td><td>Layer 2 → Layer 3</td><td>CRM 資格管控</td><td>risk_flag / crm_eligible / crm_tier</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ 04 玩家DNA ══ -->
+  <div class="section" id="s04">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <span class="section-title">模塊① · 玩家 DNA 複合分群</span>
+    </div>
+    <p class="section-sub">以 5 個維度打分，輸出複合身份標籤，取代大中小客的單因子分法。同樣是「大客」，不同 DNA 的策略完全不同。</p>
+
+    <div class="sub-section">
+      <div class="sub-title">五個評分維度</div>
+      <div class="dim-grid">
+        <div class="dim dim-v">
+          <div class="dim-code">V</div>
+          <div class="dim-name">價值維度</div>
+          <div class="dim-desc">近90天 GGR 貢獻<br>平均單筆入金額<br><br>你對我們貢獻多少<br><span style="font-size:10px;color:var(--teal);margin-top:6px;display:block;">✅ cmb_game_transaction</span></div>
+        </div>
+        <div class="dim dim-e">
+          <div class="dim-code">E</div>
+          <div class="dim-name">參與維度</div>
+          <div class="dim-desc">近30天登入天數<br>Session 數 × 時長<br><br>你有多沉浸<br><span style="font-size:10px;color:var(--teal);margin-top:6px;display:block;">✅ cmb_game_tracker<br>cmb_game_transaction</span></div>
+        </div>
+        <div class="dim dim-l">
+          <div class="dim-code">L</div>
+          <div class="dim-name">忠誠維度</div>
+          <div class="dim-desc">平台年資<br>連續活躍週數<br><br>你會不會跑<br><span style="font-size:10px;margin-top:6px;display:block;"><span style="color:var(--teal);">✅</span> cmb_game_transaction（留存計算）<br><span style="color:var(--yellow);">⚠️ 年資需 jc_account_create</span></span></div>
+        </div>
+        <div class="dim dim-r">
+          <div class="dim-code">R</div>
+          <div class="dim-name">風險維度</div>
+          <div class="dim-desc">D/W 比 + GGR%<br>異常行為命中數<br><br>你危不危險<br><span style="font-size:10px;margin-top:6px;display:block;"><span style="color:var(--teal);">✅</span> GGR% → cmb_game_transaction<br><span style="color:var(--yellow);">⚠️ D/W比 → 需追加平台商金流</span></span></div>
+        </div>
+        <div class="dim dim-g">
+          <div class="dim-code">G</div>
+          <div class="dim-name">遊戲DNA</div>
+          <div class="dim-desc">主力機台類型<br>偏好波動度<br><br>你愛什麼玩法<br><span style="font-size:10px;color:var(--teal);margin-top:6px;display:block;">✅ cmb_game_transaction（押注段 / 機台）</span></div>
+        </div>
+      </div>
+      <div class="callout callout-blue">
+        <strong>評分邏輯：</strong>V / E / L 各打 1–5 分；R 分越高代表風險越高（1 最低，5 最高）；G 輸出分類標籤（非數字）。每日快照更新一次。
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">複合標籤示例與對應策略</div>
+      <div class="player-box" style="background:rgba(0,200,160,0.05); border:1px solid rgba(0,200,160,0.2); margin-bottom:10px;">
+        <div class="player-id" style="color:var(--teal);">類型 A · 核心留存目標客</div>
+        <div class="score-row">
+          <span class="sc" style="background:rgba(251,191,36,0.15);color:var(--yellow);">V5</span>
+          <span class="sc" style="background:rgba(74,158,255,0.15);color:var(--blue);">E5</span>
+          <span class="sc" style="background:rgba(0,200,160,0.15);color:var(--teal);">L5</span>
+          <span class="sc" style="background:rgba(239,68,68,0.15);color:var(--red);">R1</span>
+          <span class="sc" style="background:rgba(167,139,250,0.15);color:var(--purple);">Slot 高波動</span>
+        </div>
+        <div class="player-strat"><strong style="color:var(--text);">策略：</strong>新高波動機台首批邀請 · 專屬活動優先排序 · 不推低波動任務 · 重點維護</div>
+      </div>
+      <div class="player-box" style="background:rgba(251,191,36,0.05); border:1px solid rgba(251,191,36,0.2); margin-bottom:10px;">
+        <div class="player-id" style="color:var(--yellow);">類型 B · 高價值流失風險客</div>
+        <div class="score-row">
+          <span class="sc" style="background:rgba(251,191,36,0.15);color:var(--yellow);">V4</span>
+          <span class="sc" style="background:rgba(74,158,255,0.15);color:var(--blue);">E1</span>
+          <span class="sc" style="background:rgba(0,200,160,0.15);color:var(--teal);">L3</span>
+          <span class="sc" style="background:rgba(239,68,68,0.15);color:var(--red);">R1</span>
+          <span class="sc" style="background:rgba(167,139,250,0.15);color:var(--purple);">Slot 中波動</span>
+        </div>
+        <div class="player-strat"><strong style="color:var(--text);">策略：</strong>流失預警即時觸發 → 推薦他最後玩過的機台 + 限時回歸獎勵</div>
+      </div>
+      <div class="player-box" style="background:rgba(74,158,255,0.05); border:1px solid rgba(74,158,255,0.2); margin-bottom:10px;">
+        <div class="player-id" style="color:var(--blue);">類型 C · 成長中新玩家</div>
+        <div class="score-row">
+          <span class="sc" style="background:rgba(251,191,36,0.15);color:var(--yellow);">V2</span>
+          <span class="sc" style="background:rgba(74,158,255,0.15);color:var(--blue);">E3</span>
+          <span class="sc" style="background:rgba(0,200,160,0.15);color:var(--teal);">L1</span>
+          <span class="sc" style="background:rgba(239,68,68,0.15);color:var(--red);">R1</span>
+          <span class="sc" style="background:rgba(167,139,250,0.15);color:var(--purple);">Slot 低波動</span>
+        </div>
+        <div class="player-strat"><strong style="color:var(--text);">策略：</strong>引導探索更多機台 · 任務驅動習慣養成 · 逐步引導至中高波動遊戲</div>
+      </div>
+      <div class="player-box" style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2);">
+        <div class="player-id" style="color:var(--red);">類型 D · 高風控玩家 → 自動排除 CRM</div>
+        <div class="score-row">
+          <span class="sc" style="background:rgba(251,191,36,0.15);color:var(--yellow);">V3</span>
+          <span class="sc" style="background:rgba(74,158,255,0.15);color:var(--blue);">E3</span>
+          <span class="sc" style="background:rgba(0,200,160,0.15);color:var(--teal);">L2</span>
+          <span class="sc" style="background:rgba(239,68,68,0.25);color:var(--red); border:1px solid rgba(239,68,68,0.4);">R4 ⚠</span>
+          <span class="sc" style="background:rgba(167,139,250,0.15);color:var(--purple);">Casino</span>
+        </div>
+        <div class="player-strat"><strong style="color:var(--text);">策略：</strong>crm_eligible = 0，所有活動資格封鎖，轉交風控審核。不做任何 CRM 促銷觸達。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 05 遊戲媒合 ══ -->
+  <div class="section" id="s05">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <span class="section-title">模塊② · 遊戲-玩家媒合引擎</span>
+    </div>
+    <p class="section-sub">找到「對的玩家玩對的遊戲」——這是提升遊戲留存最直接的槓桿，也是遊戲商獨有的差異化能力。</p>
+
+    <div class="sub-section">
+      <div class="sub-title">親和力矩陣建立</div>
+      <div class="callout callout-blue">
+        <strong>計算邏輯：</strong>對每個玩家，計算其與每款遊戲的親和力分數：<br>
+        <code style="font-family:monospace; color:var(--teal);">Affinity(player, game) = 停留時長占比 × 0.35 + 回訪頻率 × 0.35 + Spin集中度 × 0.20 + 押注量占比 × 0.10</code><br><br>
+        輸出：玩家 × 遊戲 的親和力矩陣（每週重算）
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">推薦引擎運作流程</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>步驟</th><th>做什麼</th><th>技術</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Step 1</strong></td><td>建立玩家-遊戲親和力矩陣</td><td>歷史行為加權計算</td></tr>
+            <tr><td><strong>Step 2</strong></td><td>找到行為最相似的玩家群（K-NN）</td><td>協同過濾（Item-CF / User-CF）</td></tr>
+            <tr><td><strong>Step 3</strong></td><td>過濾掉玩家已玩過且低親和力的遊戲</td><td>規則過濾 + 親和力閾值</td></tr>
+            <tr><td><strong>Step 4</strong></td><td>結合 G 維度（波動度偏好）做最終排序</td><td>G-DNA 加權調整</td></tr>
+            <tr><td><strong>Step 5</strong></td><td>輸出 Top 3 推薦機台，寫入 snapshot</td><td>recommended_games 欄位</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">推薦使用場景</div>
+      <ul class="ilist">
+        <li><strong>遊戲大廳入口</strong>：個人化推薦區塊，取代隨機熱門遊戲排行</li>
+        <li><strong>任務系統</strong>：指定玩家前往高親和力機台完成任務，而非隨機指定</li>
+        <li><strong>流失挽回推播</strong>：挽回策略中推的遊戲，一定是玩家親和力最高的那款</li>
+        <li><strong>新機台導流</strong>：新遊戲上線時，找出最可能喜歡的玩家群，精準推送</li>
+      </ul>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">遊戲層健康監控（附加產出）</div>
+      <p style="font-size:14px; color:var(--text-dim); margin-bottom:14px; line-height:1.6;">媒合引擎建立的同時，自然產出遊戲維度的分析報告——可作為 B2B 數據加值服務提供給平台商。</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>遊戲指標</th><th>定義</th><th>業務用途</th></tr></thead>
+          <tbody>
+            <tr><td>7天 / 30天 回訪率</td><td>玩過某遊戲後 7/30 天內再次回來的比率</td><td>哪款遊戲留人留得最久</td></tr>
+            <tr><td>玩家 DNA 分佈</td><td>各遊戲的核心玩家是什麼 DNA 組合</td><td>指導新機台的目標用戶設計</td></tr>
+            <tr><td>跨遊戲跳轉路徑</td><td>玩家從遊戲 A 跳往遊戲 B 的頻率矩陣</td><td>找出最佳遊戲導流路徑</td></tr>
+            <tr><td>GGR 貢獻排行</td><td>各遊戲對平台 GGR 的貢獻佔比</td><td>重點維護高貢獻機台</td></tr>
+            <tr><td>實際 RTP 偏差</td><td>實際 RTP vs 設計 RTP 的差值（滾動計算）</td><td>機台健康監控，異常即時警報</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 06 AI 留存 ══ -->
+  <div class="section" id="s06">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <span class="section-title">模塊③ · AI 留存預測與干預</span>
+    </div>
+    <p class="section-sub">流失前 7–14 天，行為數據已在說話。AI 比人工更早識別流失訊號，並觸發精準干預策略。</p>
+
+    <div class="sub-section">
+      <div class="sub-title">流失預警模型</div>
+      <div class="g2">
+        <div>
+          <div class="card" style="border-color:rgba(0,200,160,0.2);">
+            <div class="card-title" style="color:var(--teal);">輸入特徵（全部從玩家明細計算）</div>
+            <div class="card-body">
+              <ul class="ilist" style="margin-top:4px;">
+                <li>近 7 / 14 / 30 天登入頻率變化趨勢</li>
+                <li>Spin 頻率週環比下降率</li>
+                <li>平均單注金額縮水幅度</li>
+                <li>Session 時長縮短幅度</li>
+                <li>活躍遊戲數減少（廣度收縮）</li>
+                <li>最後一次登入距今天數</li>
+                <li>E 維度近期趨勢（近 7 天 vs 近 30 天對比）</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="border-color:rgba(251,191,36,0.2); margin-bottom:12px;">
+            <div class="card-title" style="color:var(--yellow);">模型輸出</div>
+            <div class="card-body">
+              7 天流失機率分數 <strong style="color:var(--text-bright);">0–100</strong><br>
+              每日批次推論，結果寫入 player_behavior_snapshot.churn_score<br><br>
+              <strong>技術：</strong>LightGBM<br>
+              <strong>驗收標準：</strong>AUC ≥ 0.75 才正式上線<br>
+              <strong>更新頻率：</strong>每日批次（每日 01:00）
+            </div>
+          </div>
+          <div class="callout callout-teal" style="font-size:13px;">
+            <strong>A/B 驗證：</strong>AI 介入組 vs 隨機對照組，比較 7 天留存率差異，每月滾動評估模型效果並迭代。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">三級干預策略</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>流失分級</th><th>churn_score</th><th>干預時機</th><th>策略內容</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge b-red">🚨 高危流失</span></td>
+              <td>≥ 80</td>
+              <td>即時觸發</td>
+              <td>推送<strong>親和力最高的機台</strong> + 限時回歸獎勵。用熟悉感降低重啟摩擦。</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-yellow">⚠ 中危預警</span></td>
+              <td>60–79</td>
+              <td>隔日觸發</td>
+              <td>推薦引擎輸出<strong>高親和力但未玩過的新遊戲</strong> + 任務引導。用新鮮感重新勾住。</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-gray">🔵 觀察期</span></td>
+              <td>40–59</td>
+              <td>正常維護</td>
+              <td>標記觀察，不額外干預，避免過度打擾造成反效果。</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-blue">📊 已流失</span></td>
+              <td>—（30天+ 未活躍）</td>
+              <td>召回策略</td>
+              <td>分析流失前最後行為，推<strong>精準召回遊戲</strong> + 低門檻回歸禮。不廣撒網，做精準召回。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 07 風控 ══ -->
+  <div class="section" id="s07">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <span class="section-title">模塊④ · 風控整合層</span>
+    </div>
+    <p class="section-sub">留存策略的前提：先識別哪些玩家不該被促銷觸及。所有 CRM 行動觸發前，必須先通過風控資格查核。</p>
+
+    <div class="sub-section">
+      <div class="sub-title">CMB 風控數據資源</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div class="callout callout-teal" style="font-size:13px; margin-bottom:0;">
+          <strong style="color:var(--teal);">✅ 已有（CMB 內建警報系統）</strong><br>
+          <code style="font-size:14px;">cmb_game_transaction</code> — 原始交易（RTP / GGR 計算來源）<br>
+          <code style="font-size:14px;">cmb_slot_freespin_receives</code> — FreeSpin 紀錄<br>
+          → 支撐 RTP 異常偵測 + 洗注 GGR% 計算
+        </div>
+        <div class="callout" style="background:rgba(251,191,36,0.06); border-left:3px solid var(--yellow); color:#a89060; font-size:13px; margin-bottom:0;">
+          <strong style="color:var(--yellow);">⚠️ 需追加（JC 金流跨表串接）</strong><br>
+          <code style="font-size:14px;">jc_inflow_transaction</code> — 入金<br>
+          <code style="font-size:14px;">jc_outflow_transaction</code> — 出金<br>
+          <code style="font-size:14px;">jc_account_create</code> — 帳號更換紀錄<br>
+          → 支撐 D/W 比計算 + 帳號頻繁更換偵測<br>
+          <strong>優先事項：確認 JC 數據串接方式與時程</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">四種異常偵測規則</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>異常類型</th><th>觸發條件</th><th>CRM 動作</th><th>數據來源</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge b-red">洗注行為</span></td>
+              <td>30天押注 ≥ ₱10,000 且 GGR &lt; 1%</td>
+              <td>R 維度 +2 · crm_eligible = 0 · 所有促銷封鎖 · 轉風控審核</td>
+              <td><span style="color:var(--teal);font-size:15px;">✅ cmb_game_transaction</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-red">高 D/W 比</span></td>
+              <td>30天 D/W 比（出金÷入金）&gt; 0.8</td>
+              <td>R 維度 +1 · crm_tier = limited · 只允許低風險活動</td>
+              <td><span style="color:var(--yellow);font-size:15px;">⚠️ 需追加 JC 金流</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-yellow">帳號頻繁更換</span></td>
+              <td>30天內更換出金帳號 ≥ 2 次</td>
+              <td>R 維度 +2 · crm_eligible = 0 · 出金審核升人工</td>
+              <td><span style="color:var(--yellow);font-size:15px;">⚠️ 需追加 jc_outflow_transaction</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-yellow">RTP 機台異常</span></td>
+              <td>機台實際 RTP 偏離設計值 ±3%，持續 &gt; 2小時；或單小時 RTP &gt; 100%</td>
+              <td>即時警報 → 自動暫停該機台的 CRM 推薦資格</td>
+              <td><span style="color:var(--teal);font-size:15px;">✅ cmb_game_transaction（RTP 計算）</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">CRM 資格管控矩陣</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>R 評分</th><th>crm_tier</th><th>CRM 資格</th><th>允許的活動類型</th></tr></thead>
+          <tbody>
+            <tr><td>R 1–2</td><td><span class="badge b-teal">full</span></td><td>完整</td><td>所有 CRM 活動正常參與</td></tr>
+            <tr><td>R 3</td><td><span class="badge b-yellow">limited</span></td><td>降級</td><td>只允許低風險活動（簽到 / 任務引導），不投高價值獎勵</td></tr>
+            <tr><td>R 4–5</td><td><span class="badge b-red">blocked</span></td><td>封鎖</td><td>所有 CRM 活動暫停，crm_eligible = 0，轉交風控</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-red">
+        <strong>核心原則：</strong>CRM 是為了留住「好玩家」，不是讓高風險玩家有更多套利機會。風控查核必須在所有行動觸發之前執行，作為系統的第一道閘門。
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 08 ROADMAP ══ -->
+  <div class="section" id="s08">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <span class="section-title">Roadmap · 三個 Phase</span>
+    </div>
+    <p class="section-sub">約 6 個月推進，數據組主導建模，RD 最小化介入（只需建 snapshot table + 推薦結果回寫接口）。</p>
+
+    <div class="phase-block phase-1">
+      <div class="phase-header">
+        <span class="phase-title">Phase 1 · 數據地基</span>
+        <span class="phase-period badge b-blue">Month 1–2</span>
+      </div>
+      <div class="phase-items">
+        <div class="phase-item">✅ CMB 側數據確認（cmb_game_transaction 為主要計算來源，搭配 cmb_game_tracker / cmb_slot_freespin_receives）</div>
+        <div class="phase-item">⚠️ <strong>優先確認 JC 金流串接方案</strong>（jc_inflow / jc_outflow / jc_account_create），D/W 比計算依賴此步</div>
+        <div class="phase-item">建立 player_behavior_snapshot table，欄位 V/E/L/G 先用 CMB 數據部署，R 維度待 JC 金流接通後補全</div>
+        <div class="phase-item">建立 KPI 基準線：各遊戲 7 / 30 天留存率現況（從 cmb_game_transaction 計算）</div>
+        <div class="phase-item">風控 R 維度邏輯實作，crm_eligible / crm_tier 欄位上線</div>
+        <div class="phase-item">驗收：DNA 標籤覆蓋率 ≥ 95% 活躍玩家</div>
+      </div>
+    </div>
+
+    <div class="phase-block phase-2">
+      <div class="phase-header">
+        <span class="phase-title">Phase 2 · AI 核心上線</span>
+        <span class="phase-period badge b-teal">Month 3–4</span>
+      </div>
+      <div class="phase-items">
+        <div class="phase-item">流失預警模型 v1（LightGBM）訓練與評估</div>
+        <div class="phase-item">churn_score 每日批次推論，寫回 snapshot</div>
+        <div class="phase-item">三級干預策略觸發邏輯實作</div>
+        <div class="phase-item">玩家-遊戲親和力矩陣建立（每週更新）</div>
+        <div class="phase-item">推薦引擎 v1（協同過濾）上線，Top 3 寫回 snapshot</div>
+        <div class="phase-item">A/B Test 框架建立，開始蒐集干預效果數據</div>
+      </div>
+    </div>
+
+    <div class="phase-block phase-3">
+      <div class="phase-header">
+        <span class="phase-title">Phase 3 · 規模化與迭代</span>
+        <span class="phase-period badge b-purple">Month 5–6</span>
+      </div>
+      <div class="phase-items">
+        <div class="phase-item">個人化遊戲推薦整合至前端（遊戲大廳 / 任務指定）</div>
+        <div class="phase-item">流失干預自動化觸發完整上線</div>
+        <div class="phase-item">遊戲健康監控看板上線</div>
+        <div class="phase-item">RTP 異常即時偵測（Z-Score，接警報通道）</div>
+        <div class="phase-item">模型效果滾動評估，依 A/B 結果迭代特徵與閾值</div>
+        <div class="phase-item">評估遊戲健康報告作為 B2B 加值服務的可行性</div>
+      </div>
+    </div>
+
+    <div class="sub-section" style="margin-top:24px;">
+      <div class="sub-title">資源需求</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>職能</th><th>Phase 1</th><th>Phase 2</th><th>Phase 3</th></tr></thead>
+          <tbody>
+            <tr><td><strong>數據組</strong></td><td>數據規格定義 · 快照部署 · 基準線建立</td><td>建模 + 評估 · A/B 框架</td><td>模型迭代 · 效果報告</td></tr>
+            <tr><td><strong>後端 RD</strong></td><td>Snapshot table 建立 · 欄位設計</td><td>推薦回寫接口</td><td>前端整合 API</td></tr>
+            <tr><td><strong>前端</strong></td><td>—</td><td>—</td><td>推薦區塊 UI</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 09 KPI ══ -->
+  <div class="section" id="s09">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <span class="section-title">KPI 體系</span>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">北極星指標</div>
+      <div class="kpi-grid">
+        <div class="kpi-card" style="background:rgba(0,200,160,0.07); border:1px solid rgba(0,200,160,0.2);">
+          <div class="num" style="color:var(--teal);">D7</div>
+          <div class="lbl">7天遊戲留存率</div>
+          <div class="note" style="color:var(--teal);">核心北極星</div>
+        </div>
+        <div class="kpi-card" style="background:rgba(74,158,255,0.07); border:1px solid rgba(74,158,255,0.2);">
+          <div class="num" style="color:var(--blue);">D30</div>
+          <div class="lbl">30天遊戲留存率</div>
+          <div class="note" style="color:var(--blue);">長期健康指標</div>
+        </div>
+        <div class="kpi-card" style="background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.2);">
+          <div class="num" style="color:var(--yellow);">LTV</div>
+          <div class="lbl">玩家終身 GGR</div>
+          <div class="note" style="color:var(--yellow);">留存的結果指標</div>
+        </div>
+        <div class="kpi-card" style="background:rgba(167,139,250,0.07); border:1px solid rgba(167,139,250,0.2);">
+          <div class="num" style="color:var(--purple);">AUC</div>
+          <div class="lbl">流失模型準確度</div>
+          <div class="note" style="color:var(--purple);">目標 ≥ 0.75</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">各模塊追蹤指標</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>模塊</th><th>追蹤指標</th><th>追蹤起始</th></tr></thead>
+          <tbody>
+            <tr><td><strong>① DNA 分群</strong></td><td>標籤覆蓋率（≥95%）· 各分群玩家佔比分佈</td><td>Phase 1 完成後</td></tr>
+            <tr><td><strong>② 遊戲媒合</strong></td><td>推薦機台點擊率 · 推薦後 Session 時長 · A/B vs 對照組</td><td>Phase 3 上線後</td></tr>
+            <tr><td><strong>③ 留存預測</strong></td><td>模型 AUC · 高危玩家挽回成功率 · 干預組 vs 對照組留存率差</td><td>Phase 2 完成後</td></tr>
+            <tr><td><strong>④ 風控整合</strong></td><td>風控封鎖玩家比例 · 誤判率（FP/FN）· 異常偵測反應時間</td><td>Phase 1 完成後</td></tr>
+            <tr><td><strong>遊戲健康</strong></td><td>各機台 7/30 天回訪率 · GGR 貢獻排行 · RTP 偏差頻率</td><td>Phase 2 完成後</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sub-section">
+      <div class="sub-title">為什麼這套值得投資</div>
+      <ul class="ilist">
+        <li><strong>數據已在手</strong>：我們已有玩家明細，不需額外採購數據——只需建計算層</li>
+        <li><strong>留存的複利效應</strong>：留存提升 1% = GGR 長期複利增長，不是一次性收益</li>
+        <li><strong>AI 邊際成本趨零</strong>：模型建好後，規模越大效益越高，邊際成本幾乎為零</li>
+        <li><strong>B2B 差異化</strong>：遊戲健康報告可作為加值服務提供給平台商，提升我們的合作議價力</li>
+        <li><strong>RD 最小介入</strong>：數據組主導建模，RD 只需建 snapshot table 與回寫接口，開發成本可控</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ 10 待確認 ══ -->
+  <div class="section" id="s10">
+    <div class="section-header">
+      <span class="section-num">10</span>
+      <span class="section-title">待確認事項</span>
+    </div>
+
+    <div class="oq-item">
+      <span class="oq-tag b-red">數據確認</span>
+      <div class="oq-text"><strong>玩家明細數據接入規格</strong>：AWC API 或其他接口的 player_id × game_id × bet × win × timestamp 欄位格式、延遲時間、歷史數據回溯深度（需多少個月）</div>
+    </div>
+    <div class="oq-item">
+      <span class="oq-tag b-yellow">RD 確認</span>
+      <div class="oq-text"><strong>player_behavior_snapshot 建立時程</strong>：RD 評估 Phase 1 的快照 table 建立工時，確認 Phase 1 的啟動時間與 RD 資源</div>
+    </div>
+    <div class="oq-item">
+      <span class="oq-tag b-yellow">RD 確認</span>
+      <div class="oq-text"><strong>推薦結果回寫接口</strong>：數據組模型輸出 Top 3 推薦清單後，寫入 snapshot 的方式（直接寫 DB / API 回寫）及前端讀取規格</div>
+    </div>
+    <div class="oq-item">
+      <span class="oq-tag b-blue">PM 確認</span>
+      <div class="oq-text"><strong>D/W 比計算基礎</strong>：30天 D/W 比的「出金」與「入金」定義——含平台贈款？含活動發放？需統一口徑</div>
+    </div>
+    <div class="oq-item">
+      <span class="oq-tag b-blue">PM 確認</span>
+      <div class="oq-text"><strong>推薦引擎呈現方式</strong>：Phase 3 個人化推薦在遊戲大廳的 UI 呈現形式，需與前端 PM 及設計確認</div>
+    </div>
+    <div class="oq-item">
+      <span class="oq-tag b-blue">PM 確認</span>
+      <div class="oq-text"><strong>B2B 數據報告可行性</strong>：遊戲健康報告提供給平台商是否涉及數據授權或合約條款，需與商務確認</div>
+    </div>
+    <div class="oq-item">
+      <span class="oq-tag b-gray">後期討論</span>
+      <div class="oq-text"><strong>跨市場部署</strong>：本框架設計為市場無關（market-agnostic），不同市場的玩家行為差異（押注習慣、波動度偏好、幣值）建議分市場各自訓練 DNA 模型，避免跨市場特徵稀釋準確度</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    Combo CRM × AI 規劃書 · v1.0 · 2026 · CONFIDENTIAL<br>
+    各模塊細節於對應 Phase 啟動前以獨立需求文件呈現
+  </div>
+
+</main>
+
+<script>
+  // Sidebar active state on scroll
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

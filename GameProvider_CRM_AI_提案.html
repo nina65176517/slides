@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>遊戲商 CRM × AI 提案</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #08101a; font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; color: #c0d0e8; overflow: hidden; }
+
+  .slides { width: 100%; height: 100vh; position: relative; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; padding: 42px 56px 48px; overflow: hidden; }
+  .slide.active { display: flex; }
+
+  /* TOP BAR */
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 26px; flex-shrink: 0; }
+  .top-label { font-size: 11px; font-weight: 700; letter-spacing: 2.5px; color: #00c8a0; text-transform: uppercase; }
+  .slide-num { font-size: 11px; color: #2a4060; letter-spacing: 1px; }
+
+  h1 { font-size: 54px; font-weight: 800; line-height: 1.1; color: #e8f2ff; }
+  h2 { font-size: 30px; font-weight: 700; color: #dde8f8; margin-bottom: 18px; flex-shrink: 0; }
+  .accent { color: #00c8a0; }
+  .accent2 { color: #4a9eff; }
+  .sub { font-size: 16px; color: #567090; line-height: 1.65; margin-top: 8px; }
+
+  /* CARDS */
+  .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 18px 20px; }
+  .card-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .card-body { font-size: 14px; color: #7a90a8; line-height: 1.7; }
+
+  /* GRIDS */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+  /* BADGES */
+  .badge { display: inline-block; border-radius: 5px; font-size: 12px; font-weight: 600; padding: 3px 10px; }
+  .b-teal   { background: rgba(0,200,160,0.12);  border: 1px solid rgba(0,200,160,0.3);  color: #00c8a0; }
+  .b-blue   { background: rgba(74,158,255,0.12); border: 1px solid rgba(74,158,255,0.3); color: #4a9eff; }
+  .b-yellow { background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.3); color: #fbbf24; }
+  .b-red    { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #ef4444; }
+  .b-purple { background: rgba(167,139,250,0.12);border: 1px solid rgba(167,139,250,0.3);color: #a78bfa; }
+  .b-gray   { background: rgba(148,163,184,0.08);border: 1px solid rgba(148,163,184,0.2);color: #94a3b8; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: rgba(0,200,160,0.07); color: #00c8a0; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding: 9px 12px; text-align: left; border-bottom: 1px solid rgba(0,200,160,0.18); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #8a9ab8; vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+
+  /* HIGHLIGHT BOXES */
+  .hl { background: rgba(0,200,160,0.06); border-left: 3px solid #00c8a0; border-radius: 0 8px 8px 0; padding: 12px 16px; font-size: 14px; color: #7a9ab8; line-height: 1.6; }
+  .hl.blue   { background: rgba(74,158,255,0.06);  border-color: #4a9eff; }
+  .hl.yellow { background: rgba(251,191,36,0.06);  border-color: #fbbf24; }
+  .hl.red    { background: rgba(239,68,68,0.06);   border-color: #ef4444; }
+  .hl.purple { background: rgba(167,139,250,0.06); border-color: #a78bfa; }
+
+  /* BULLET LIST */
+  .blist { list-style: none; }
+  .blist li { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; color: #7a90a8; line-height: 1.55; }
+  .blist li:last-child { border-bottom: none; }
+  .blist li::before { content: '›'; color: #00c8a0; flex-shrink: 0; font-size: 16px; margin-top: -1px; }
+
+  /* ARCHITECTURE LAYERS */
+  .arch-layer { border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; }
+  .arch-layer:last-child { margin-bottom: 0; }
+  .arch-icon { font-size: 22px; flex-shrink: 0; }
+  .arch-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .arch-desc  { font-size: 13px; color: #6a8098; line-height: 1.5; }
+  .layer-data   { background: rgba(74,158,255,0.07);  border: 1px solid rgba(74,158,255,0.18);  }
+  .layer-intel  { background: rgba(0,200,160,0.07);   border: 1px solid rgba(0,200,160,0.2);    }
+  .layer-action { background: rgba(251,191,36,0.07);  border: 1px solid rgba(251,191,36,0.18);  }
+  .layer-data  .arch-title { color: #4a9eff; }
+  .layer-intel .arch-title { color: #00c8a0; }
+  .layer-action .arch-title { color: #fbbf24; }
+
+  /* DIMENSION BLOCKS */
+  .dim { border-radius: 10px; padding: 14px 16px; }
+  .dim-v { background: rgba(251,191,36,0.07);  border: 1px solid rgba(251,191,36,0.2);  }
+  .dim-e { background: rgba(74,158,255,0.07);  border: 1px solid rgba(74,158,255,0.2);  }
+  .dim-l { background: rgba(0,200,160,0.07);   border: 1px solid rgba(0,200,160,0.2);   }
+  .dim-r { background: rgba(239,68,68,0.07);   border: 1px solid rgba(239,68,68,0.2);   }
+  .dim-g { background: rgba(167,139,250,0.07); border: 1px solid rgba(167,139,250,0.2); }
+  .dim-label { font-size: 13px; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
+  .dim-v .dim-label { color: #fbbf24; }
+  .dim-e .dim-label { color: #4a9eff; }
+  .dim-l .dim-label { color: #00c8a0; }
+  .dim-r .dim-label { color: #ef4444; }
+  .dim-g .dim-label { color: #a78bfa; }
+  .dim-metrics { font-size: 13px; color: #6a8098; line-height: 1.65; }
+
+  /* PLAYER TAG BOX */
+  .player-box { border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .player-box:last-child { margin-bottom: 0; }
+  .player-id { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+  .score-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .sc { font-size: 12px; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+  .player-strat { font-size: 13px; color: #567090; line-height: 1.5; }
+
+  /* PHASE BLOCK */
+  .phase { border-radius: 10px; padding: 16px 18px; }
+  .phase-1 { background: rgba(74,158,255,0.07);  border: 1px solid rgba(74,158,255,0.2);  }
+  .phase-2 { background: rgba(0,200,160,0.07);   border: 1px solid rgba(0,200,160,0.2);   }
+  .phase-3 { background: rgba(167,139,250,0.07); border: 1px solid rgba(167,139,250,0.2); }
+  .phase-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .phase-1 .phase-title { color: #4a9eff; }
+  .phase-2 .phase-title { color: #00c8a0; }
+  .phase-3 .phase-title { color: #a78bfa; }
+  .phase-period { font-size: 11px; font-weight: 700; letter-spacing: 1px; opacity: .6; margin-bottom: 10px; }
+  .phase-item { font-size: 13px; color: #6a8098; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .phase-item:last-child { border-bottom: none; }
+
+  /* KPI BOX */
+  .kpi-box { border-radius: 10px; padding: 16px; text-align: center; }
+  .kpi-num { font-size: 36px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .kpi-label { font-size: 12px; color: #567090; }
+  .kpi-target { font-size: 13px; font-weight: 600; margin-top: 6px; }
+
+  /* COVER SPECIFICS */
+  .cover-tag { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #00c8a0; text-transform: uppercase; margin-bottom: 18px; }
+  .divider { width: 48px; height: 3px; background: linear-gradient(90deg, #00c8a0, #4a9eff); border-radius: 2px; margin: 22px 0; }
+  .meta-row { display: flex; gap: 32px; margin-top: 28px; }
+  .meta-item { font-size: 13px; color: #2a4060; }
+  .meta-item strong { display: block; color: #3a6080; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+
+  /* PAIN POINT CARDS */
+  .pain { border-radius: 10px; padding: 14px 16px; border-left: 3px solid; }
+  .pain-r { background: rgba(239,68,68,0.05);   border-color: #ef4444; }
+  .pain-y { background: rgba(251,191,36,0.05);  border-color: #fbbf24; }
+  .pain-title { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+  .pain-r .pain-title { color: #ef4444; }
+  .pain-y .pain-title { color: #fbbf24; }
+  .pain-body { font-size: 13px; color: #6a7a90; line-height: 1.6; }
+
+  /* NAV */
+  .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 50px; background: rgba(8,16,26,0.96); border-top: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; gap: 16px; z-index: 100; }
+  .nav-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09); border-radius: 6px; color: #3a5a7a; font-size: 14px; padding: 5px 20px; cursor: pointer; transition: all .15s; }
+  .nav-btn:hover { background: rgba(0,200,160,0.1); color: #00c8a0; border-color: rgba(0,200,160,0.3); }
+  .nav-dots { display: flex; gap: 6px; align-items: center; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #1a3050; cursor: pointer; transition: all .15s; }
+  .dot.active { background: #00c8a0; width: 18px; border-radius: 3px; }
+  .counter { font-size: 11px; color: #2a4060; min-width: 44px; text-align: center; }
+
+  .section-lbl { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #00c8a0; margin-bottom: 10px; }
+  .arrow-down { text-align: center; font-size: 18px; color: #1a3050; margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="slides">
+
+<!-- ═══ SLIDE 1: COVER ═══ -->
+<div class="slide active">
+  <div class="top-bar">
+    <span class="top-label">Game Provider · CRM Strategy</span>
+    <span class="slide-num">01 / 10</span>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; justify-content:center; max-width:820px;">
+    <div class="cover-tag">Internal Proposal · PH Market · 2026</div>
+    <h1>遊戲商<br><span class="accent">CRM × AI</span><br>策略提案</h1>
+    <div class="divider"></div>
+    <p class="sub">
+      以<strong style="color:#c0d0e8;">玩家留存</strong>為北極星，從玩家行為數據出發<br>
+      建立遊戲商專屬的智能玩家關係管理體系
+    </p>
+    <div class="meta-row">
+      <div class="meta-item"><strong>提案方</strong>數據組 / Slots PM</div>
+      <div class="meta-item"><strong>市場</strong>菲律賓 PH</div>
+      <div class="meta-item"><strong>北極星</strong>玩家留存率（Game-level）</div>
+      <div class="meta-item"><strong>版本</strong>v1.0</div>
+    </div>
+  </div>
+  <div style="display:flex; gap:12px; flex-shrink:0;">
+    <span class="badge b-teal">玩家DNA分群</span>
+    <span class="badge b-blue">遊戲媒合引擎</span>
+    <span class="badge b-yellow">AI留存預測</span>
+    <span class="badge b-red">風控整合</span>
+    <span class="badge b-purple">三層架構</span>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 2: WHY ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">問題與機會</span>
+    <span class="slide-num">02 / 10</span>
+  </div>
+  <h2>為什麼遊戲商需要 CRM？</h2>
+  <div class="g2" style="flex:1; gap:20px;">
+    <div>
+      <div class="section-lbl">現在的問題</div>
+      <div class="pain pain-r" style="margin-bottom:10px;">
+        <div class="pain-title">❌ 不知道玩家為什麼離開</div>
+        <div class="pain-body">玩家停止玩我們的遊戲，我們只能事後從 GGR 下滑發現，沒有提前預警機制，更不知道是哪類玩家在流失</div>
+      </div>
+      <div class="pain pain-r" style="margin-bottom:10px;">
+        <div class="pain-title">❌ 所有玩家用同一套邏輯對待</div>
+        <div class="pain-body">高價值玩家和低價值玩家拿到一樣的體驗、一樣的遊戲推薦——留不住核心客，也抓不回流失客</div>
+      </div>
+      <div class="pain pain-y">
+        <div class="pain-title">⚠ 數據有了，但沒有被用起來</div>
+        <div class="pain-body">我們有最細緻的玩家行為數據（每筆下注 × 遊戲 × 時間），卻只用來出 GGR 報表——這是最大的浪費</div>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl">我們的機會</div>
+      <div class="hl" style="margin-bottom:10px;">
+        <strong style="color:#00c8a0;">遊戲商有別人沒有的數據視角</strong><br>
+        平台商看的是「玩家在平台上花了多少」，我們能看到「玩家在<em>每一款遊戲</em>上的每一個行為」——這個粒度更細、更有預測力
+      </div>
+      <div class="hl blue" style="margin-bottom:10px;">
+        <strong style="color:#4a9eff;">留存 = 可預測、可干預</strong><br>
+        流失前 7–14 天，玩家的行為已經開始發出訊號（登入頻率下降、單注縮水、遊戲切換頻繁）。AI 能在人工發現前就抓到
+      </div>
+      <div class="hl yellow">
+        <strong style="color:#fbbf24;">北極星：玩家對我們遊戲的留存率</strong><br>
+        不是平台的 D1，而是「玩家下週還在玩我們的遊戲嗎？」——這是我們能控制的指標，GGR 是它的結果
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 3: DATA ADVANTAGE ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">我們的起點</span>
+    <span class="slide-num">03 / 10</span>
+  </div>
+  <h2>我們的數據優勢</h2>
+  <div class="g2" style="flex:1; gap:24px;">
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">我們擁有的原材料</div>
+      <div class="arch-layer layer-data" style="margin-bottom:10px;">
+        <div class="arch-icon">🎮</div>
+        <div>
+          <div class="arch-title">玩家明細數據</div>
+          <div class="arch-desc">player_id × game_id × bet × win × timestamp<br>每一筆下注都是訊號</div>
+        </div>
+      </div>
+      <div class="arch-layer layer-data" style="margin-bottom:10px;">
+        <div class="arch-icon">⏱️</div>
+        <div>
+          <div class="arch-title">Session 行為數據</div>
+          <div class="arch-desc">每次遊戲的時長、Spin 頻率、中途離開時間點</div>
+        </div>
+      </div>
+      <div class="arch-layer layer-data">
+        <div class="arch-icon">📊</div>
+        <div>
+          <div class="arch-title">跨遊戲軌跡</div>
+          <div class="arch-desc">玩家在不同機台間的跳轉路徑、停留分佈</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">這些數據能回答的問題</div>
+      <table>
+        <thead><tr><th>業務問題</th><th>數據能給的答案</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>這個玩家會流失嗎？</td>
+            <td style="color:#00c8a0;">近14天 Spin 頻率趨勢 + 平均注額變化</td>
+          </tr>
+          <tr>
+            <td>他適合玩哪款遊戲？</td>
+            <td style="color:#00c8a0;">歷史遊戲偏好 + 波動度行為 + 同類玩家路徑</td>
+          </tr>
+          <tr>
+            <td>哪款遊戲留存最好？</td>
+            <td style="color:#00c8a0;">各機台的 7 天 / 30 天回訪率</td>
+          </tr>
+          <tr>
+            <td>高價值玩家是什麼樣的？</td>
+            <td style="color:#00c8a0;">GGR 貢獻 × 活躍頻率 × 遊戲廣度 × 年資</td>
+          </tr>
+          <tr>
+            <td>這個行為是洗注嗎？</td>
+            <td style="color:#00c8a0;">Turnover 倍率 + GGR% + 出入金間隔</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="hl" style="margin-top:14px; font-size:13px;">
+        <strong style="color:#00c8a0;">結論：</strong>我們不缺數據，缺的是把數據<strong style="color:#c0d0e8;">系統化轉化為行動</strong>的能力——這就是 CRM × AI 要解決的事。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 4: ARCHITECTURE ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">整體架構</span>
+    <span class="slide-num">04 / 10</span>
+  </div>
+  <h2>三層系統架構</h2>
+  <div class="g2" style="flex:1; gap:24px;">
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <div class="arch-layer layer-data">
+        <div class="arch-icon">🗄️</div>
+        <div style="flex:1;">
+          <div class="arch-title">Layer 1 · 數據層</div>
+          <div class="arch-desc">原始事件收集 → 清洗 → 玩家行為快照（每日更新）<br>
+          <span style="color:#3a5a7a; font-size:12px;">player_behavior_snapshot table · 維度：GGR / Spin數 / Session時長 / 遊戲廣度 / D/W比</span></div>
+        </div>
+        <span class="badge b-blue" style="flex-shrink:0;">每日 00:00</span>
+      </div>
+      <div class="arrow-down">↓</div>
+      <div class="arch-layer layer-intel">
+        <div class="arch-icon">🧠</div>
+        <div style="flex:1;">
+          <div class="arch-title">Layer 2 · 智能層</div>
+          <div class="arch-desc">AI 模型計算 → 玩家 DNA 標籤 + 留存預測分 + 遊戲推薦<br>
+          <span style="color:#2a5040; font-size:12px;">churn_score / dna_tag / recommended_games / risk_flag 寫回 snapshot</span></div>
+        </div>
+        <span class="badge b-teal" style="flex-shrink:0;">每日批次</span>
+      </div>
+      <div class="arrow-down">↓</div>
+      <div class="arch-layer layer-action">
+        <div class="arch-icon">⚡</div>
+        <div style="flex:1;">
+          <div class="arch-title">Layer 3 · 行動層</div>
+          <div class="arch-desc">依標籤觸發差異化策略：個人化推薦 / 留存干預 / 風控封鎖<br>
+          <span style="color:#4a3a10; font-size:12px;">觸發條件 → 行動類型 → 時機 → 效果回饋</span></div>
+        </div>
+        <span class="badge b-yellow" style="flex-shrink:0;">即時觸發</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">四個核心模塊</div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(251,191,36,0.2);">
+        <div class="card-title" style="color:#fbbf24;">① 玩家 DNA 複合畫像</div>
+        <div class="card-body">5維評分取代大中小客分法，每個玩家輸出精準身份標籤</div>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(74,158,255,0.2);">
+        <div class="card-title" style="color:#4a9eff;">② 遊戲-玩家媒合引擎</div>
+        <div class="card-body">分析玩家-遊戲親和力，輸出個人化遊戲推薦，提升遊戲黏著度</div>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(0,200,160,0.2);">
+        <div class="card-title" style="color:#00c8a0;">③ AI 留存預測與干預</div>
+        <div class="card-body">預測玩家 7 天流失機率，提前觸發挽回策略，在流失前介入</div>
+      </div>
+      <div class="card" style="border-color:rgba(239,68,68,0.2);">
+        <div class="card-title" style="color:#ef4444;">④ 風控整合層</div>
+        <div class="card-body">異常行為偵測自動掛旗，高風控玩家排除促銷資格，RTP 異常即時警報</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 5: PLAYER DNA ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">模塊① · 玩家DNA</span>
+    <span class="slide-num">05 / 10</span>
+  </div>
+  <h2>玩家 DNA 複合畫像</h2>
+  <p class="sub" style="margin-bottom:16px; flex-shrink:0;">5 個維度打分，輸出複合標籤——同樣是「大客」，不同 DNA 的玩家策略完全不同</p>
+  <div class="g3" style="gap:12px; flex-shrink:0;">
+    <div class="dim dim-v">
+      <div class="dim-label">V · 價值</div>
+      <div class="dim-metrics">近90天 GGR 貢獻<br>平均單筆入金<br><span style="font-size:11px; opacity:.6;">你對我們貢獻多少</span></div>
+    </div>
+    <div class="dim dim-e">
+      <div class="dim-label">E · 參與度</div>
+      <div class="dim-metrics">近30天登入天數<br>Session 數 × 平均時長<br><span style="font-size:11px; opacity:.6;">你有多沉浸</span></div>
+    </div>
+    <div class="dim dim-l">
+      <div class="dim-label">L · 忠誠度</div>
+      <div class="dim-metrics">平台年資<br>連續活躍週數<br><span style="font-size:11px; opacity:.6;">你會不會跑</span></div>
+    </div>
+    <div class="dim dim-r">
+      <div class="dim-label">R · 風險</div>
+      <div class="dim-metrics">D/W 比 + GGR%<br>異常行為命中數<br><span style="font-size:11px; opacity:.6;">你危不危險</span></div>
+    </div>
+    <div class="dim dim-g">
+      <div class="dim-label">G · 遊戲DNA</div>
+      <div class="dim-metrics">主力機台類型<br>偏好波動度 高/中/低<br><span style="font-size:11px; opacity:.6;">你愛什麼玩法</span></div>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; justify-content:center; text-align:center;">
+      <div style="font-size:13px; color:#00c8a0; font-weight:700; margin-bottom:8px;">評分邏輯</div>
+      <div style="font-size:13px; color:#567090; line-height:1.8;">V / E / L → 各 1–5 分<br>R → 分越高越危險<br>G → 分類標籤輸出<br><span style="font-size:11px; color:#2a4060;">每日快照更新</span></div>
+    </div>
+  </div>
+  <div class="g2" style="gap:12px; margin-top:12px; flex:1;">
+    <div class="player-box" style="background:rgba(0,200,160,0.05); border:1px solid rgba(0,200,160,0.2);">
+      <div class="player-id" style="color:#00c8a0;">▶ 核心留存目標客</div>
+      <div class="score-row">
+        <span class="sc" style="background:rgba(251,191,36,0.15);color:#fbbf24;">V5</span>
+        <span class="sc" style="background:rgba(74,158,255,0.15);color:#4a9eff;">E5</span>
+        <span class="sc" style="background:rgba(0,200,160,0.15);color:#00c8a0;">L5</span>
+        <span class="sc" style="background:rgba(239,68,68,0.15);color:#ef4444;">R1</span>
+        <span class="sc" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Slot 高波動</span>
+      </div>
+      <div class="player-strat">策略：新高波動機台首批邀請 · 專屬活動優先 · 不推低波動任務</div>
+    </div>
+    <div class="player-box" style="background:rgba(251,191,36,0.05); border:1px solid rgba(251,191,36,0.2);">
+      <div class="player-id" style="color:#fbbf24;">▶ 流失風險高價值客</div>
+      <div class="score-row">
+        <span class="sc" style="background:rgba(251,191,36,0.15);color:#fbbf24;">V4</span>
+        <span class="sc" style="background:rgba(74,158,255,0.15);color:#4a9eff;">E1</span>
+        <span class="sc" style="background:rgba(0,200,160,0.15);color:#00c8a0;">L3</span>
+        <span class="sc" style="background:rgba(239,68,68,0.15);color:#ef4444;">R1</span>
+        <span class="sc" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Slot 中波動</span>
+      </div>
+      <div class="player-strat">策略：流失預警介入 → 推他最後玩過的機台 + 回歸獎勵</div>
+    </div>
+    <div class="player-box" style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2);">
+      <div class="player-id" style="color:#ef4444;">▶ 高風控 → 排除 CRM</div>
+      <div class="score-row">
+        <span class="sc" style="background:rgba(251,191,36,0.15);color:#fbbf24;">V3</span>
+        <span class="sc" style="background:rgba(74,158,255,0.15);color:#4a9eff;">E3</span>
+        <span class="sc" style="background:rgba(0,200,160,0.15);color:#00c8a0;">L2</span>
+        <span class="sc" style="background:rgba(239,68,68,0.25);color:#ef4444; border:1px solid rgba(239,68,68,0.4);">R4 ⚠</span>
+        <span class="sc" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Casino</span>
+      </div>
+      <div class="player-strat">策略：自動封鎖所有 CRM 活動資格，轉交風控審核</div>
+    </div>
+    <div class="player-box" style="background:rgba(74,158,255,0.05); border:1px solid rgba(74,158,255,0.2);">
+      <div class="player-id" style="color:#4a9eff;">▶ 成長中新玩家</div>
+      <div class="score-row">
+        <span class="sc" style="background:rgba(251,191,36,0.15);color:#fbbf24;">V2</span>
+        <span class="sc" style="background:rgba(74,158,255,0.15);color:#4a9eff;">E3</span>
+        <span class="sc" style="background:rgba(0,200,160,0.15);color:#00c8a0;">L1</span>
+        <span class="sc" style="background:rgba(239,68,68,0.15);color:#ef4444;">R1</span>
+        <span class="sc" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Slot 低波動</span>
+      </div>
+      <div class="player-strat">策略：引導探索更多機台 · 任務驅動習慣養成 · 逐步升級波動度</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 6: GAME MATCHING ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">模塊② · 遊戲媒合</span>
+    <span class="slide-num">06 / 10</span>
+  </div>
+  <h2>遊戲-玩家媒合引擎</h2>
+  <p class="sub" style="margin-bottom:18px; flex-shrink:0;">找到「對的玩家玩對的遊戲」——這是提升留存最直接的槓桿</p>
+  <div class="g2" style="flex:1; gap:22px;">
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">怎麼運作</div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(74,158,255,0.2);">
+        <div class="card-title" style="color:#4a9eff;">Step 1 · 建立親和力矩陣</div>
+        <div class="card-body">計算每個玩家對每款遊戲的親和力分數：<br>
+        玩過的遊戲數 × 停留時長占比 × 回訪頻率 × 押注集中度<br>
+        → 輸出 <strong style="color:#c0d0e8;">玩家 × 遊戲</strong> 親和力矩陣</div>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(0,200,160,0.2);">
+        <div class="card-title" style="color:#00c8a0;">Step 2 · 協同過濾找相似</div>
+        <div class="card-body">「跟你行為最像的玩家，後來都去玩了 Game X」<br>
+        → 即使玩家本人沒玩過，也能推薦他可能喜歡的機台</div>
+      </div>
+      <div class="card" style="border-color:rgba(167,139,250,0.2);">
+        <div class="card-title" style="color:#a78bfa;">Step 3 · 輸出 Top 3 推薦</div>
+        <div class="card-body">每個玩家每週更新一次推薦清單，在進入遊戲大廳、任務觸發、回歸推播時使用<br>
+        <strong style="color:#c0d0e8;">不再推隨機遊戲，每個人看到的都是為他準備的</strong></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">遊戲層健康監控（額外產出）</div>
+      <table>
+        <thead><tr><th>遊戲指標</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>7天 / 30天 回訪率</td>
+            <td style="color:#00c8a0;">哪款遊戲留人留得最久</td>
+          </tr>
+          <tr>
+            <td>玩家分群分佈</td>
+            <td style="color:#00c8a0;">哪款遊戲的核心客是什麼 DNA</td>
+          </tr>
+          <tr>
+            <td>跨遊戲跳轉路徑</td>
+            <td style="color:#00c8a0;">玩家從哪裡來、往哪裡去</td>
+          </tr>
+          <tr>
+            <td>實際 RTP vs 設計 RTP</td>
+            <td style="color:#fbbf24;">機台是否按設計跑，異常即時警報</td>
+          </tr>
+          <tr>
+            <td>GGR 貢獻排行</td>
+            <td style="color:#00c8a0;">重點維護哪些遊戲</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="hl" style="margin-top:14px; font-size:13px;">
+        <strong style="color:#00c8a0;">額外價值：</strong>這份遊戲健康報告可以直接提供給合作平台商，作為<strong style="color:#c0d0e8;">數據加值服務</strong>，提升我們的 B2B 競爭力。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 7: AI RETENTION ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">模塊③ · AI留存</span>
+    <span class="slide-num">07 / 10</span>
+  </div>
+  <h2>AI 留存預測與干預</h2>
+  <p class="sub" style="margin-bottom:18px; flex-shrink:0;">流失前 7–14 天，行為數據已在說話——AI 比人工早看到</p>
+  <div class="g2" style="flex:1; gap:22px;">
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">流失預警模型</div>
+      <div class="card" style="border-color:rgba(0,200,160,0.2); margin-bottom:12px;">
+        <div class="card-title" style="color:#00c8a0;">輸入特徵（從玩家明細計算）</div>
+        <div class="card-body">
+          <ul class="blist" style="margin-top:4px;">
+            <li>近7 / 14 / 30天登入頻率變化趨勢</li>
+            <li>Spin 頻率週環比下降率</li>
+            <li>平均單注金額縮水幅度</li>
+            <li>Session 時長縮短幅度</li>
+            <li>活躍遊戲數減少（廣度收縮）</li>
+            <li>最後一次登入距今天數</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(251,191,36,0.2);">
+        <div class="card-title" style="color:#fbbf24;">輸出 & 觸發邏輯</div>
+        <div class="card-body">
+          輸出：玩家 7 天流失機率分 <strong style="color:#c0d0e8;">0–100</strong><br><br>
+          <span style="color:#ef4444;">≥ 80分</span> → 即時觸發挽回策略<br>
+          <span style="color:#fbbf24;">60–79分</span> → 輕度介入（推薦 + 任務引導）<br>
+          <span style="color:#00c8a0;">&lt; 60分</span> → 正常維護<br><br>
+          <span style="font-size:12px; color:#3a5a70;">技術：LightGBM · 每日批次推論 · 目標 AUC ≥ 0.75</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">三種干預策略</div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(239,68,68,0.2);">
+        <div class="card-title" style="color:#ef4444;">🚨 高危流失（≥80分）</div>
+        <div class="card-body">
+          推送他<strong style="color:#c0d0e8;">最後玩過的機台</strong>（親和力最高的那款）+ 限時回歸獎勵<br>
+          → 用熟悉感降低重啟摩擦
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(251,191,36,0.2);">
+        <div class="card-title" style="color:#fbbf24;">⚠ 中危預警（60–79分）</div>
+        <div class="card-body">
+          推薦引擎輸出新遊戲（他還沒玩過但高親和力）+ 任務引導<br>
+          → 用新鮮感重新勾住
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(74,158,255,0.2);">
+        <div class="card-title" style="color:#4a9eff;">📊 已流失玩家（30天+ 未活躍）</div>
+        <div class="card-body">
+          獨立召回策略：分析流失前的最後行為，推最可能引起興趣的機台 + 低門檻回歸禮<br>
+          → 不做廣撒網，做<strong style="color:#c0d0e8;">精準召回</strong>
+        </div>
+      </div>
+      <div class="hl" style="margin-top:12px; font-size:13px;">
+        <strong style="color:#00c8a0;">驗證方式：</strong>A/B Test — AI 介入組 vs 對照組的 7 天留存率差異，每個月滾動評估模型效果
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 8: RISK ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">模塊④ · 風控整合</span>
+    <span class="slide-num">08 / 10</span>
+  </div>
+  <h2>風控整合層</h2>
+  <p class="sub" style="margin-bottom:18px; flex-shrink:0;">留存策略的前提：先識別哪些玩家不該被促銷觸及</p>
+  <div class="g2" style="flex:1; gap:22px;">
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">三種異常偵測</div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(239,68,68,0.2);">
+        <div class="card-title" style="color:#ef4444;">🔴 洗注行為偵測</div>
+        <div class="card-body">
+          30天押注 ≥ ₱10,000 且 GGR &lt; 1%<br>
+          → 玩家近乎「保本」，疑似利用遊戲洗資金<br>
+          <strong style="color:#c0d0e8;">動作：</strong>掛風控標籤 + 排除所有 CRM 促銷資格
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-color:rgba(239,68,68,0.2);">
+        <div class="card-title" style="color:#ef4444;">🔴 高 D/W 比異常</div>
+        <div class="card-body">
+          30天 D/W 比（出金÷入金） &gt; 0.8<br>
+          → 長期存少提多，資金流向異常<br>
+          <strong style="color:#c0d0e8;">動作：</strong>降級 CRM 投放（只允許低風險活動）
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(251,191,36,0.2);">
+        <div class="card-title" style="color:#fbbf24;">🟡 RTP 機台異常</div>
+        <div class="card-body">
+          機台實際 RTP 偏離設計值 ±3% 超過 2 小時<br>
+          或單小時 RTP &gt; 100%<br>
+          <strong style="color:#c0d0e8;">動作：</strong>即時警報 → 自動暫停該機台的 CRM 推薦
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">CRM 資格管控邏輯</div>
+      <table>
+        <thead><tr><th>玩家狀態</th><th>CRM 資格</th><th>動作</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>R 評分 1–2<br><span style="font-size:12px; color:#3a5a70;">低風險</span></td>
+            <td><span class="badge b-teal">完整資格</span></td>
+            <td style="color:#567090;">所有活動正常參與</td>
+          </tr>
+          <tr>
+            <td>R 評分 3<br><span style="font-size:12px; color:#3a5a70;">觀察中</span></td>
+            <td><span class="badge b-yellow">降級資格</span></td>
+            <td style="color:#567090;">只參與簽到/碎片類，不投高價值活動</td>
+          </tr>
+          <tr>
+            <td>R 評分 4–5<br><span style="font-size:12px; color:#3a5a70;">高風險</span></td>
+            <td><span class="badge b-red">封鎖資格</span></td>
+            <td style="color:#567090;">所有 CRM 活動暫停，轉交風控審核</td>
+          </tr>
+          <tr>
+            <td>洗注嫌疑命中<br><span style="font-size:12px; color:#3a5a70;">GGR &lt; 1%</span></td>
+            <td><span class="badge b-red">即時封鎖</span></td>
+            <td style="color:#567090;">FREE SPIN / 推薦全停，出金審核升人工</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="hl red" style="margin-top:14px; font-size:13px;">
+        <strong style="color:#ef4444;">核心原則：</strong>CRM 是為了留住「好玩家」，不是讓「高風險玩家」有更多機會套利。風控邏輯必須在所有促銷觸發之前執行。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 9: ROADMAP ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">推進 Roadmap</span>
+    <span class="slide-num">09 / 10</span>
+  </div>
+  <h2>三個 Phase 推進計劃</h2>
+  <div class="g3" style="gap:16px; flex-shrink:0;">
+    <div class="phase phase-1">
+      <div class="phase-title">Phase 1 · 數據地基</div>
+      <div class="phase-period">Month 1–2 · 優先執行</div>
+      <div class="phase-item">確認玩家明細數據接入規格</div>
+      <div class="phase-item">建立 player_behavior_snapshot table</div>
+      <div class="phase-item">部署5維 DNA 評分（V/E/L/R/G）</div>
+      <div class="phase-item">建立 KPI 基準線（留存率現況）</div>
+      <div class="phase-item">風控 R 維度與 CRM 資格邏輯串接</div>
+    </div>
+    <div class="phase phase-2">
+      <div class="phase-title">Phase 2 · AI 上線</div>
+      <div class="phase-period">Month 3–4 · 核心能力</div>
+      <div class="phase-item">流失預警模型 v1（LightGBM）</div>
+      <div class="phase-item">churn_score 每日寫回 snapshot</div>
+      <div class="phase-item">玩家-遊戲親和力矩陣建立</div>
+      <div class="phase-item">遊戲推薦引擎 v1（協同過濾）</div>
+      <div class="phase-item">A/B Test 框架建立</div>
+    </div>
+    <div class="phase phase-3">
+      <div class="phase-title">Phase 3 · 規模化</div>
+      <div class="phase-period">Month 5–6 · 全面擴張</div>
+      <div class="phase-item">留存干預自動化觸發</div>
+      <div class="phase-item">個人化推薦上線（遊戲大廳）</div>
+      <div class="phase-item">遊戲健康監控看板</div>
+      <div class="phase-item">RTP 異常即時偵測</div>
+      <div class="phase-item">模型效果滾動評估 & 迭代</div>
+    </div>
+  </div>
+  <div class="g2" style="gap:16px; margin-top:16px; flex:1; align-content:start;">
+    <div>
+      <div class="section-lbl" style="margin-bottom:10px;">各 Phase 驗收標準</div>
+      <table>
+        <thead><tr><th>Phase</th><th>驗收指標</th></tr></thead>
+        <tbody>
+          <tr><td>Phase 1</td><td style="color:#4a9eff;">DNA 標籤覆蓋率 ≥ 95% 活躍玩家 · 快照每日準時更新</td></tr>
+          <tr><td>Phase 2</td><td style="color:#00c8a0;">流失預警 AUC ≥ 0.75 · 推薦引擎點擊率 vs 對照組</td></tr>
+          <tr><td>Phase 3</td><td style="color:#a78bfa;">AI 介入組 7天留存率 vs 對照組提升可量化</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="section-lbl" style="margin-bottom:10px;">資源需求</div>
+      <ul class="blist">
+        <li><strong style="color:#c0d0e8;">數據組</strong>：建模 + 快照部署 + A/B 驗證（Phase 1–2 主力）</li>
+        <li><strong style="color:#c0d0e8;">後端 RD</strong>：snapshot table 建立 + 推薦結果回寫接口</li>
+        <li><strong style="color:#c0d0e8;">前端</strong>：Phase 3 個人化推薦 UI 呈現</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SLIDE 10: KPI ═══ -->
+<div class="slide">
+  <div class="top-bar">
+    <span class="top-label">預期效益 & KPI</span>
+    <span class="slide-num">10 / 10</span>
+  </div>
+  <h2>預期效益 & KPI 體系</h2>
+  <div style="flex:1; display:flex; flex-direction:column; gap:16px;">
+    <div>
+      <div class="section-lbl" style="margin-bottom:12px;">北極星 · 玩家對我們遊戲的留存率</div>
+      <div class="g4" style="gap:12px;">
+        <div class="kpi-box" style="background:rgba(0,200,160,0.07); border:1px solid rgba(0,200,160,0.2);">
+          <div class="kpi-num" style="color:#00c8a0;">D7</div>
+          <div class="kpi-label">7天留存率</div>
+          <div class="kpi-target" style="color:#00c8a0;">Phase 2 開始追蹤</div>
+        </div>
+        <div class="kpi-box" style="background:rgba(74,158,255,0.07); border:1px solid rgba(74,158,255,0.2);">
+          <div class="kpi-num" style="color:#4a9eff;">D30</div>
+          <div class="kpi-label">30天留存率</div>
+          <div class="kpi-target" style="color:#4a9eff;">核心長期指標</div>
+        </div>
+        <div class="kpi-box" style="background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.2);">
+          <div class="kpi-num" style="color:#fbbf24;">Churn</div>
+          <div class="kpi-label">流失攔截率</div>
+          <div class="kpi-target" style="color:#fbbf24;">AI 介入 vs 對照組</div>
+        </div>
+        <div class="kpi-box" style="background:rgba(167,139,250,0.07); border:1px solid rgba(167,139,250,0.2);">
+          <div class="kpi-num" style="color:#a78bfa;">LTV</div>
+          <div class="kpi-label">玩家終身 GGR</div>
+          <div class="kpi-target" style="color:#a78bfa;">留存的最終結果</div>
+        </div>
+      </div>
+    </div>
+    <div class="g2" style="gap:16px; flex:1; align-content:start;">
+      <div>
+        <div class="section-lbl" style="margin-bottom:10px;">各模塊追蹤指標</div>
+        <table>
+          <thead><tr><th>模塊</th><th>KPI</th></tr></thead>
+          <tbody>
+            <tr><td>① DNA 分群</td><td style="color:#567090;">標籤覆蓋率 · 各分群玩家佔比分佈</td></tr>
+            <tr><td>② 遊戲媒合</td><td style="color:#567090;">推薦機台點擊率 · 推薦後 Session 時長</td></tr>
+            <tr><td>③ 流失預警</td><td style="color:#567090;">模型 AUC · 高危玩家挽回成功率</td></tr>
+            <tr><td>④ 風控整合</td><td style="color:#567090;">風控封鎖比例 · 誤判率（FP/FN）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <div class="section-lbl" style="margin-bottom:10px;">為什麼這套值得投資</div>
+        <ul class="blist">
+          <li>我們<strong style="color:#c0d0e8;">已有數據</strong>，不需要額外採購——只需建計算層</li>
+          <li>留存提升 1 個百分點 = GGR 的<strong style="color:#c0d0e8;">複利增長</strong>，不是一次性收益</li>
+          <li>遊戲健康報告可作為<strong style="color:#c0d0e8;">B2B 差異化服務</strong>提供給平台商</li>
+          <li>AI 模型建好後<strong style="color:#c0d0e8;">邊際成本趨近零</strong>，規模越大效益越高</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<nav class="nav-bar">
+  <button class="nav-btn" onclick="changeSlide(-1)">← Prev</button>
+  <div class="nav-dots" id="dots"></div>
+  <span class="counter" id="counter">1 / 10</span>
+  <button class="nav-btn" onclick="changeSlide(1)">Next →</button>
+</nav>
+
+<script>
+  const TOTAL = 10;
+  let cur = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dotsEl = document.getElementById('dots');
+  const counter = document.getElementById('counter');
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    dotsEl.children[cur].classList.remove('active');
+    cur = (n + TOTAL) % TOTAL;
+    slides[cur].classList.add('active');
+    dotsEl.children[cur].classList.add('active');
+    counter.textContent = (cur + 1) + ' / ' + TOTAL;
+  }
+  function changeSlide(dir) { goTo(cur + dir); }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') changeSlide(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   changeSlide(-1);
+  });
+</script>
+</body>
+</html>
